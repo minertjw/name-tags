@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 from PIL import Image
 
 # === Configuration ===
-image_dir = 'retry2'
+image_dir = 'images'
 images_per_page = 8
 pages_per_file = 1
 images_per_file = images_per_page * pages_per_file
