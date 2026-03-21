@@ -1,16 +1,16 @@
 import os
 import sys
 from pathlib import Path
+
+from PIL import Image
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtWidgets import (QApplication, QFileDialog, QGroupBox,
+                               QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+                               QPlainTextEdit, QPushButton, QRadioButton,
+                               QVBoxLayout, QWidget)
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
-from PIL import Image
-from PySide6.QtCore import QThread, Signal
-from PySide6.QtWidgets import (
-    QApplication, QFileDialog, QGroupBox, QHBoxLayout, QLabel,
-    QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QRadioButton,
-    QVBoxLayout, QWidget,
-)
 
 # === Layout Constants ===
 IMAGES_PER_PAGE = 8
@@ -72,7 +72,7 @@ def generate_split_pdfs(image_dir: str, output_dir: str, log) -> None:
                 log(f"⚠️ {e}")
 
         c.save()
-        log(f"✅ PDF saved: {output_pdf}")
+        log(f"PDF saved: {output_pdf}")
 
 
 def generate_combined_pdf(image_dir: str, output_dir: str, log) -> None:
@@ -101,7 +101,7 @@ def generate_combined_pdf(image_dir: str, output_dir: str, log) -> None:
             log(f"⚠️ {e}")
 
     c.save()
-    log(f"✅ PDF saved: {output_pdf}")
+    log(f"PDF saved: {output_pdf}")
 
 
 # === Qt Worker Thread ===
@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
 
         combined = self._radio_combined.isChecked()
         self._generate_btn.setEnabled(False)
-        self._append_log("🚀 Starting PDF generation…")
+        self._append_log("Starting PDF generation…")
 
         self._worker = PdfWorker(image_dir, output_dir, combined)
         self._worker.log_message.connect(self._append_log)
@@ -226,7 +226,7 @@ class MainWindow(QMainWindow):
         self._worker.start()
 
     def _on_finished(self):
-        self._append_log("✅ Done.")
+        self._append_log("Done.")
         self._generate_btn.setEnabled(True)
         self._worker = None
 
