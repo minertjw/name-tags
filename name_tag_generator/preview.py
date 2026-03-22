@@ -7,6 +7,7 @@ from PySide6.QtGui import QColor, QIntValidator, QPixmap
 from PySide6.QtWidgets import (
 	QApplication,
 	QColorDialog,
+	QComboBox,
 	QFileDialog,
 	QFrame,
 	QFormLayout,
@@ -23,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from common.coercion import as_float, as_int, as_str
 from common.styles import get_shared_stylesheet
+from .fonts import get_font_options
 from .settings import (
 	DEFAULT_BOTTOM_FONT_SIZE,
 	DEFAULT_MIDDLE_FONT_SIZE,
@@ -94,6 +96,22 @@ class PreviewWindow(QMainWindow):
 		template_row_layout.addWidget(self._template_edit)
 		template_row_layout.addWidget(template_browse)
 		form.addRow("Template", template_row)
+
+		self._font_combo = QComboBox()
+		self._font_combo.setMinimumContentsLength(20)
+		self._font_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+		for label, value in get_font_options():
+			self._font_combo.addItem(label, value)
+
+		font_browse = QPushButton("Custom...")
+		font_browse.clicked.connect(self._browse_font)
+		font_row = QWidget()
+		font_row_layout = QHBoxLayout(font_row)
+		font_row_layout.setContentsMargins(0, 0, 0, 0)
+		font_row_layout.setSpacing(8)
+		font_row_layout.addWidget(self._font_combo, 1)
+		font_row_layout.addWidget(font_browse)
+		form.addRow("Font", font_row)
 
 		self._top_text_edit, self._top_font_slider = self._create_text_control(
 			form,
@@ -256,6 +274,7 @@ class PreviewWindow(QMainWindow):
 
 	def _connect_auto_refresh(self) -> None:
 		self._template_edit.textChanged.connect(self._schedule_preview_refresh)
+		self._font_combo.currentIndexChanged.connect(self._schedule_preview_refresh)
 		self._top_text_edit.textChanged.connect(self._schedule_preview_refresh)
 		self._top_font_slider.valueChanged.connect(self._schedule_preview_refresh)
 		self._middle_text_edit.textChanged.connect(self._schedule_preview_refresh)
@@ -269,6 +288,7 @@ class PreviewWindow(QMainWindow):
 	def _apply_settings(self, settings: dict[str, object]) -> None:
 		self._template_edit.setText(as_str(settings.get("template_path"), ""))
 		self._output_edit.setText(as_str(settings.get("output_path"), str(DEFAULT_OUTPUT)))
+		self._set_font_selection(as_str(settings.get("font_path"), ""))
 		self._top_text_edit.setText(as_str(settings.get("top_text"), ""))
 		self._middle_text_edit.setText(as_str(settings.get("middle_text"), ""))
 		self._bottom_text_edit.setText(as_str(settings.get("bottom_text"), ""))
@@ -286,6 +306,7 @@ class PreviewWindow(QMainWindow):
 		return {
 			"template_path": self._template_edit.text().strip(),
 			"output_path": self._output_edit.text().strip(),
+			"font_path": as_str(self._font_combo.currentData(), "").strip(),
 			"top_text": self._top_text_edit.text().strip(),
 			"middle_text": self._middle_text_edit.text().strip(),
 			"bottom_text": self._bottom_text_edit.text().strip(),
@@ -320,6 +341,30 @@ class PreviewWindow(QMainWindow):
 		)
 		if selected:
 			self._output_edit.setText(selected)
+
+	def _browse_font(self) -> None:
+		selected, _ = QFileDialog.getOpenFileName(
+			self,
+			"Select Font File",
+			str(BASE_DIR / "assets"),
+			"Fonts (*.ttf *.otf *.ttc)",
+		)
+		if selected:
+			self._set_font_selection(selected)
+
+	def _set_font_selection(self, font_value: str) -> None:
+		normalized_value = font_value.strip()
+		for index in range(self._font_combo.count()):
+			if as_str(self._font_combo.itemData(index), "") == normalized_value:
+				self._font_combo.setCurrentIndex(index)
+				return
+
+		if not normalized_value:
+			self._font_combo.setCurrentIndex(0)
+			return
+
+		self._font_combo.addItem(Path(normalized_value).stem or normalized_value, normalized_value)
+		self._font_combo.setCurrentIndex(self._font_combo.count() - 1)
 
 	def _pick_shadow_color(self) -> None:
 		selected = QColorDialog.getColor(self._shadow_color, self, "Select Shadow Color")
@@ -376,6 +421,7 @@ class PreviewWindow(QMainWindow):
 				top_text=as_str(settings.get("top_text"), ""),
 				middle_text=as_str(settings.get("middle_text"), ""),
 				bottom_text=as_str(settings.get("bottom_text"), ""),
+				font_path=as_str(settings.get("font_path"), "").strip() or None,
 				top_font_size=as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE),
 				middle_font_size=as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE),
 				bottom_font_size=as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE),

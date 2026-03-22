@@ -92,6 +92,30 @@ def get_shared_stylesheet() -> str:
 			padding: 8px 14px;
 			min-height: 22px;
 			selection-background-color: #c67b47;
+			selection-color: #fffaf2;
+		}
+		QComboBox {
+			background-color: rgba(255, 255, 255, 0.92);
+			border: 1px solid rgba(69, 88, 69, 0.22);
+			border-radius: 16px;
+			padding: 8px 14px;
+			padding-right: 34px;
+			min-height: 22px;
+		}
+		QComboBox::drop-down {
+			subcontrol-origin: padding;
+			subcontrol-position: top right;
+			width: 28px;
+			border: none;
+			background: transparent;
+		}
+		QComboBox::down-arrow {
+			width: 0px;
+			height: 0px;
+			border-left: 6px solid transparent;
+			border-right: 6px solid transparent;
+			border-top: 7px solid #2f5a44;
+			margin-right: 10px;
 		}
 		QPlainTextEdit {
 			background-color: rgba(255, 255, 255, 0.88);
@@ -99,10 +123,45 @@ def get_shared_stylesheet() -> str:
 			border-radius: 16px;
 			padding: 12px 14px;
 			selection-background-color: #c67b47;
+			selection-color: #fffaf2;
 		}
 		QLineEdit:focus,
-		QPlainTextEdit:focus {
+		QPlainTextEdit:focus,
+		QComboBox:focus {
 			border: 2px solid #b86b38;
+		}
+		QComboBox QAbstractItemView,
+		QListView,
+		QTreeView,
+		QMenu {
+			background-color: #fffaf4;
+			alternate-background-color: #f3ece2;
+			color: #1f2a22;
+			border: 1px solid rgba(69, 88, 69, 0.22);
+			border-radius: 12px;
+			outline: 0;
+			selection-background-color: #b65f2d;
+			selection-color: #fffaf2;
+		}
+		QDialog,
+		QMessageBox,
+		QFileDialog {
+			background-color: #f7f2ea;
+			color: #1f2a22;
+		}
+		QDialog QLabel,
+		QMessageBox QLabel,
+		QFileDialog QLabel {
+			color: #1f2a22;
+		}
+		QDialog QListView,
+		QDialog QTreeView,
+		QFileDialog QListView,
+		QFileDialog QTreeView {
+			background-color: #fffaf4;
+			color: #1f2a22;
+			selection-background-color: #b65f2d;
+			selection-color: #fffaf2;
 		}
 		QPushButton {
 			background-color: #2f5a44;

@@ -496,6 +496,7 @@ class MainWindow(QMainWindow):
                 top_text=row["top"],
                 middle_text=row["middle"],
                 bottom_text=row["bottom"],
+                font_path=as_str(settings.get("font_path"), "").strip() or None,
                 top_font_size=as_int(settings.get("top_font_size"), 64),
                 middle_font_size=as_int(settings.get("middle_font_size"), 96),
                 bottom_font_size=as_int(settings.get("bottom_font_size"), 64),

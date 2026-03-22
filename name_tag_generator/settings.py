@@ -13,6 +13,7 @@ def get_default_preview_settings() -> dict[str, object]:
     return {
         "template_path": "",
         "output_path": str(DEFAULT_OUTPUT),
+        "font_path": "",
         "top_text": "UNDERGRADUATE",
         "middle_text": "THOMAS WOOD",
         "bottom_text": "MECHANICAL ENGINEERING",
