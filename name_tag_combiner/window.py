@@ -1,7 +1,8 @@
 from pathlib import Path
+import csv
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QMovie, QResizeEvent
+from PySide6.QtGui import QMovie, QPixmap, QResizeEvent
 from PySide6.QtWidgets import (
     QBoxLayout,
     QFileDialog,
@@ -10,14 +11,17 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QRadioButton,
     QScrollArea,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
+from lib.styles import get_shared_stylesheet
 from .assets import HEADER_GIF_PATH, load_app_icon
 from .worker import PdfWorker
 
@@ -26,13 +30,50 @@ LOG_FLOAT_BREAKPOINT = 1120
 LOG_FLOAT_WIDTH = 360
 
 
+def _as_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
+
+
+def _as_float(value: object, default: float) -> float:
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return default
+    return default
+
+
+def _as_str(value: object, default: str) -> str:
+    return value if isinstance(value, str) else default
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("UONES Name Tag Combiner")
         self.setMinimumSize(760, 680)
         self._worker: PdfWorker | None = None
+        self._preview_window = None
         self._header_movie = None
+        self._generator_settings = self._load_default_generator_settings()
+        self._has_rendered_generator_preview = False
+        self._generator_rows: list[dict[str, str]] = []
+        self._generator_csv_path: str | None = None
         app_icon = load_app_icon()
         if app_icon is not None:
             self.setWindowIcon(app_icon)
@@ -40,138 +81,13 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._update_content_layout(self.width())
 
+    def _load_default_generator_settings(self) -> dict[str, object]:
+        from name_tag_generator.preview import get_default_preview_settings
+
+        return get_default_preview_settings()
+
     def _apply_styles(self) -> None:
-        self.setStyleSheet(
-            """
-            QMainWindow {
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 1,
-                    stop: 0 #f6efe4,
-                    stop: 0.45 #f0dfc4,
-                    stop: 1 #d7e4d2
-                );
-            }
-            QWidget {
-                color: #1f2a22;
-                font-family: "Bahnschrift", "Trebuchet MS", sans-serif;
-                font-size: 11pt;
-            }
-            QFrame#HeaderCard,
-            QFrame#SectionCard,
-            QFrame#LogCard {
-                background-color: #e8e4dd;
-                border: 1px solid rgba(69, 88, 69, 0.16);
-                border-radius: 24px;
-            }
-            QLabel#Eyebrow {
-                color: #7c4f2c;
-                font-size: 10pt;
-                font-weight: 700;
-                letter-spacing: 0.18em;
-                text-transform: uppercase;
-            }
-            QLabel#HeroTitle {
-                color: #193126;
-                font-family: "Georgia", serif;
-                font-size: 24pt;
-                font-weight: 700;
-            }
-            QLabel#HeroBody,
-            QLabel#SectionDescription,
-            QLabel#LogHint {
-                color: #536356;
-                font-size: 10.5pt;
-            }
-            QFrame#HeroMedia {
-                background-color: rgba(255, 255, 255, 0.5);
-                border: 1px solid rgba(69, 88, 69, 0.12);
-                border-radius: 18px;
-            }
-            QLabel#HeroGifFallback {
-                color: #7c4f2c;
-                font-size: 9.5pt;
-                font-weight: 700;
-            }
-            QLabel#SectionTitle,
-            QLabel#LogTitle {
-                color: #223528;
-                font-family: "Georgia", serif;
-                font-size: 16pt;
-                font-weight: 700;
-            }
-            QLineEdit {
-                background-color: rgba(255, 255, 255, 0.88);
-                border: 1px solid rgba(69, 88, 69, 0.22);
-                border-radius: 16px;
-                padding: 8px 14px;
-                min-height: 22px;
-                selection-background-color: #c67b47;
-            }
-            QPlainTextEdit {
-                background-color: rgba(255, 255, 255, 0.88);
-                border: 1px solid rgba(69, 88, 69, 0.22);
-                border-radius: 16px;
-                padding: 12px 14px;
-                selection-background-color: #c67b47;
-            }
-            QLineEdit:focus,
-            QPlainTextEdit:focus {
-                border: 2px solid #b86b38;
-            }
-            QPushButton {
-                background-color: #2f5a44;
-                color: #fffaf2;
-                border: none;
-                border-radius: 16px;
-                padding: 12px 18px;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background-color: #376951;
-            }
-            QPushButton:pressed {
-                background-color: #244836;
-            }
-            QPushButton:disabled {
-                background-color: #8a9a8d;
-                color: #eef2ed;
-            }
-            QPushButton#AccentButton {
-                background-color: #b65f2d;
-                font-size: 12pt;
-                padding: 14px 20px;
-            }
-            QPushButton#AccentButton:hover {
-                background-color: #c76e39;
-            }
-            QPushButton#AccentButton:pressed {
-                background-color: #994b20;
-            }
-            QRadioButton {
-                spacing: 10px;
-                padding: 6px 0;
-                color: #2b3f31;
-            }
-            QRadioButton::indicator {
-                width: 18px;
-                height: 18px;
-                border-radius: 9px;
-                border: 2px solid #7b8f7e;
-                background-color: #fffdf9;
-            }
-            QRadioButton::indicator:checked {
-                border: 2px solid #b65f2d;
-                background-color: qradialgradient(
-                    cx: 0.5, cy: 0.5, radius: 0.55,
-                    fx: 0.5, fy: 0.5,
-                    stop: 0 #b65f2d,
-                    stop: 0.45 #b65f2d,
-                    stop: 0.46 #fffdf9,
-                    stop: 1 #fffdf9
-                );
-            }
-        """
-        )
+        self.setStyleSheet(get_shared_stylesheet())
 
     def _create_section(self, title: str, description: str) -> tuple[QFrame, QVBoxLayout]:
         card = QFrame()
@@ -285,6 +201,103 @@ class MainWindow(QMainWindow):
         header_layout.addWidget(header_text, 1)
         content_layout.addWidget(header)
 
+        tabs = QTabWidget()
+        tabs.setDocumentMode(True)
+        tabs.addTab(self._build_generator_tab(), "Generator")
+        tabs.addTab(self._build_combiner_tab(), "Combiner")
+        content_layout.addWidget(tabs)
+        content_layout.addStretch()
+
+    def _build_generator_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(16)
+
+        csv_card, csv_layout = self._create_section(
+            "Imported CSV preview",
+            "The first rows of the imported CSV appear here so you can verify the column mapping before generating.",
+        )
+        self._generator_csv_label = QLabel("No CSV imported.")
+        self._generator_csv_label.setObjectName("SectionDescription")
+        self._generator_csv_label.setWordWrap(True)
+        self._generator_csv_head = QPlainTextEdit()
+        self._generator_csv_head.setReadOnly(True)
+        self._generator_csv_head.setMinimumHeight(120)
+        self._generator_csv_head.setPlaceholderText("CSV head will appear here.")
+        csv_layout.addWidget(self._generator_csv_label)
+        csv_layout.addWidget(self._generator_csv_head)
+
+        import_button = QPushButton("Import List To Generate")
+        import_button.setMinimumHeight(46)
+        import_button.clicked.connect(self._import_generator_csv)
+        csv_layout.addWidget(import_button)
+
+        settings_card, settings_layout = self._create_section(
+            "Latest tag preview",
+            "The latest rendered preview appears here. Use the editor to adjust template, text, and shadow settings.",
+        )
+        self._generator_preview_label = QLabel("No preview rendered yet.")
+        self._generator_preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._generator_preview_label.setMinimumHeight(320)
+        self._generator_preview_label.setWordWrap(True)
+        settings_layout.addWidget(self._generator_preview_label)
+
+        preview_button = QPushButton("Edit Tag Preview")
+        preview_button.setMinimumHeight(46)
+        preview_button.clicked.connect(self._open_preview)
+        settings_layout.addWidget(preview_button)
+
+        self._refresh_generator_preview()
+
+        generate_card, generate_layout = self._create_section(
+            "Generate tags",
+            "Use the imported CSV rows together with the current preview settings to render a full batch of tag images.",
+        )
+        generate_button = QPushButton("Generate Name Tags From CSV")
+        generate_button.setMinimumHeight(46)
+        generate_button.clicked.connect(self._generate_tags_from_csv)
+        generate_layout.addWidget(generate_button)
+
+        layout.addWidget(settings_card)
+        layout.addWidget(csv_card)
+        layout.addWidget(generate_card)
+        layout.addStretch()
+        return tab
+
+    def _refresh_generator_preview(self) -> None:
+        if not self._has_rendered_generator_preview:
+            self._generator_preview_label.clear()
+            self._generator_preview_label.setText("No preview rendered yet. Open Edit Tag Preview to create one.")
+            return
+
+        preview_path = Path(_as_str(self._generator_settings.get("output_path"), "")).expanduser()
+        if not preview_path.is_file():
+            self._generator_preview_label.clear()
+            self._generator_preview_label.setText("Preview has not been rendered to disk yet. Re-render it from Edit Tag Preview.")
+            return
+
+        pixmap = QPixmap(str(preview_path))
+        if pixmap.isNull():
+            self._generator_preview_label.clear()
+            self._generator_preview_label.setText(f"Unable to load preview image:\n{preview_path}")
+            return
+
+        scaled = pixmap.scaled(
+            420,
+            420,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self._generator_preview_label.setPixmap(scaled)
+        self._generator_preview_label.resize(scaled.size())
+
+    def _build_combiner_tab(self) -> QWidget:
+        tab = QWidget()
+        content_layout = QVBoxLayout(tab)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(16)
+
         body = QWidget()
         self._body_layout = QBoxLayout(QBoxLayout.Direction.TopToBottom, body)
         self._body_layout.setContentsMargins(0, 0, 0, 0)
@@ -351,6 +364,7 @@ class MainWindow(QMainWindow):
         self._generate_btn.setMinimumHeight(52)
         self._generate_btn.clicked.connect(self._generate)
         self._form_layout.addWidget(self._generate_btn)
+
         self._form_layout.addStretch()
 
         self._log_card = QFrame()
@@ -378,6 +392,7 @@ class MainWindow(QMainWindow):
         log_layout.addWidget(self._log)
         self._body_layout.addWidget(self._log_card)
         content_layout.addStretch()
+        return tab
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         self._update_content_layout(event.size().width())
@@ -435,6 +450,137 @@ class MainWindow(QMainWindow):
         self._worker.log_message.connect(self._append_log)
         self._worker.finished.connect(self._on_finished)
         self._worker.start()
+
+    def _open_preview(self) -> None:
+        try:
+            from name_tag_generator.preview import PreviewWindow
+        except Exception as exc:
+            message = f"Unable to open preview window: {exc}"
+            self._append_log(message)
+            QMessageBox.critical(self, "Preview Error", message)
+            return
+
+        if self._preview_window is None:
+            self._preview_window = PreviewWindow(self._generator_settings)
+            self._preview_window.settingsChanged.connect(self._update_generator_settings)
+
+        self._preview_window.show()
+        self._preview_window.raise_()
+        self._preview_window.activateWindow()
+
+    def _update_generator_settings(self, settings: dict[str, object]) -> None:
+        self._generator_settings = dict(settings)
+        self._has_rendered_generator_preview = True
+        self._refresh_generator_preview()
+
+    def _import_generator_csv(self) -> None:
+        csv_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select CSV To Generate Tags",
+            str(Path.cwd()),
+            "CSV Files (*.csv)",
+        )
+        if not csv_path:
+            return
+
+        try:
+            rows = self._read_generator_csv(csv_path)
+        except Exception as exc:
+            QMessageBox.critical(self, "CSV Import Error", str(exc))
+            return
+
+        self._generator_csv_path = csv_path
+        self._generator_rows = rows
+        self._generator_csv_label.setText(
+            f"Imported {len(rows)} rows from {csv_path}"
+        )
+        self._generator_csv_head.setPlainText(self._format_generator_csv_head(rows))
+        self._refresh_generator_preview()
+
+    def _read_generator_csv(self, csv_path: str) -> list[dict[str, str]]:
+        with open(csv_path, newline="", encoding="utf-8-sig") as csv_file:
+            reader = csv.DictReader(csv_file)
+            if reader.fieldnames is None:
+                raise ValueError("CSV file does not contain a header row.")
+
+            field_map = {field.strip().lower(): field for field in reader.fieldnames}
+            required_columns = ("top", "middle", "bottom")
+            missing_columns = [column for column in required_columns if column not in field_map]
+            if missing_columns:
+                raise ValueError(
+                    f"CSV must contain top, middle, and bottom columns. Missing: {', '.join(missing_columns)}"
+                )
+
+            rows: list[dict[str, str]] = []
+            for raw_row in reader:
+                row = {
+                    "top": (raw_row.get(field_map["top"]) or "").strip(),
+                    "middle": (raw_row.get(field_map["middle"]) or "").strip(),
+                    "bottom": (raw_row.get(field_map["bottom"]) or "").strip(),
+                }
+                if any(row.values()):
+                    rows.append(row)
+
+        if not rows:
+            raise ValueError("CSV does not contain any non-empty rows.")
+
+        return rows
+
+    def _format_generator_csv_head(self, rows: list[dict[str, str]]) -> str:
+        preview_rows = rows[:5]
+        lines = ["top | middle | bottom"]
+        for row in preview_rows:
+            lines.append(f"{row['top']} | {row['middle']} | {row['bottom']}")
+        if len(rows) > len(preview_rows):
+            lines.append(f"... and {len(rows) - len(preview_rows)} more rows")
+        return "\n".join(lines)
+
+    def _generate_tags_from_csv(self) -> None:
+        try:
+            from name_tag_generator.text import create_tag
+        except Exception as exc:
+            QMessageBox.critical(self, "Generator Error", f"Unable to load generator: {exc}")
+            return
+
+        if not self._generator_rows:
+            QMessageBox.information(
+                self,
+                "No CSV Imported",
+                "Import a CSV with top, middle, and bottom columns first.",
+            )
+            return
+
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select Output Directory For Generated Tags",
+        )
+        if not output_dir:
+            return
+
+        settings = dict(self._generator_settings)
+        extension = Path(_as_str(settings.get("output_path"), "output.png")).suffix or ".png"
+
+        for index, row in enumerate(self._generator_rows, start=1):
+            output_path = Path(output_dir) / f"generated_tag_{index:02d}{extension}"
+            create_tag(
+                template_path=_as_str(settings.get("template_path"), ""),
+                top_text=row["top"],
+                middle_text=row["middle"],
+                bottom_text=row["bottom"],
+                top_font_size=_as_int(settings.get("top_font_size"), 64),
+                middle_font_size=_as_int(settings.get("middle_font_size"), 96),
+                bottom_font_size=_as_int(settings.get("bottom_font_size"), 64),
+                output_path=output_path,
+                shadow_color=_as_str(settings.get("shadow_color"), "#c00000"),
+                shadow_angle=_as_float(settings.get("shadow_angle"), 45.0),
+                shadow_distance=_as_float(settings.get("shadow_distance"), 6.0),
+            )
+
+        QMessageBox.information(
+            self,
+            "Tags Generated",
+            f"Generated {len(self._generator_rows)} name tags in {output_dir}",
+        )
 
     def _on_finished(self) -> None:
         self._append_log("Done.")
