@@ -15,7 +15,7 @@ def get_default_preview_settings() -> dict[str, object]:
         "output_path": str(DEFAULT_OUTPUT),
         "font_path": "",
         "top_text": "UNDERGRADUATE",
-        "middle_text": "THOMAS WOOD",
+        "middle_text": "JOHN SMITH",
         "bottom_text": "MECHANICAL ENGINEERING",
         "top_font_size": DEFAULT_TOP_FONT_SIZE,
         "middle_font_size": DEFAULT_MIDDLE_FONT_SIZE,

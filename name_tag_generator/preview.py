@@ -123,7 +123,7 @@ class PreviewWindow(QMainWindow):
 		self._middle_text_edit, self._middle_font_slider = self._create_text_control(
 			form,
 			"Middle",
-			"THOMAS WOOD",
+			"JOHN SMITH",
 			DEFAULT_MIDDLE_FONT_SIZE,
 		)
 
