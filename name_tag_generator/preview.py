@@ -1,3 +1,4 @@
+from email.charset import QP
 from pathlib import Path
 import sys
 
@@ -204,7 +205,15 @@ class PreviewWindow(QMainWindow):
 		preview_area.setWidget(self._preview_label)
 		preview_card_layout.addWidget(preview_area)
 
+		close_button = QPushButton("Close")
+		close_button.clicked.connect(self.close)
+		preview_actions = QHBoxLayout()
+		preview_actions.addStretch()
+		preview_actions.addWidget(close_button)
+		preview_card_layout.addLayout(preview_actions)
+
 		layout.addWidget(preview_card, 1)
+
 		self._connect_auto_refresh()
 
 	def _create_text_control(
