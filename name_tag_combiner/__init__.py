@@ -1,0 +1,1 @@
+"""Application package for the name tag combiner."""
