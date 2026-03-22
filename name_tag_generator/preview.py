@@ -20,7 +20,16 @@ from PySide6.QtWidgets import (
 	QWidget,
 )
 
-from lib.styles import get_shared_stylesheet
+from common.coercion import as_float, as_int, as_str
+from common.styles import get_shared_stylesheet
+from .settings import (
+	DEFAULT_BOTTOM_FONT_SIZE,
+	DEFAULT_MIDDLE_FONT_SIZE,
+	DEFAULT_OUTPUT,
+	DEFAULT_SHADOW_COLOR,
+	DEFAULT_TOP_FONT_SIZE,
+	get_default_preview_settings,
+)
 
 try:
 	from .text import create_tag
@@ -29,59 +38,6 @@ except ImportError:
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_OUTPUT = BASE_DIR / "preview_output.png"
-DEFAULT_SHADOW_COLOR = "#c00000"
-DEFAULT_TOP_FONT_SIZE = 75
-DEFAULT_MIDDLE_FONT_SIZE = 120
-DEFAULT_BOTTOM_FONT_SIZE = 75
-
-
-def _as_int(value: object, default: int) -> int:
-	if isinstance(value, bool):
-		return int(value)
-	if isinstance(value, int):
-		return value
-	if isinstance(value, float):
-		return int(value)
-	if isinstance(value, str):
-		try:
-			return int(value)
-		except ValueError:
-			return default
-	return default
-
-
-def _as_float(value: object, default: float) -> float:
-	if isinstance(value, bool):
-		return float(value)
-	if isinstance(value, (int, float)):
-		return float(value)
-	if isinstance(value, str):
-		try:
-			return float(value)
-		except ValueError:
-			return default
-	return default
-
-
-def _as_str(value: object, default: str) -> str:
-	return value if isinstance(value, str) else default
-
-
-def get_default_preview_settings() -> dict[str, object]:
-	return {
-		"template_path": "",
-		"output_path": str(DEFAULT_OUTPUT),
-		"top_text": "UNDERGRADUATE",
-		"middle_text": "THOMAS WOOD",
-		"bottom_text": "MECHANICAL ENGINEERING",
-		"top_font_size": DEFAULT_TOP_FONT_SIZE,
-		"middle_font_size": DEFAULT_MIDDLE_FONT_SIZE,
-		"bottom_font_size": DEFAULT_BOTTOM_FONT_SIZE,
-		"shadow_color": DEFAULT_SHADOW_COLOR,
-		"shadow_angle": 45,
-		"shadow_distance": 6,
-	}
 
 
 class PreviewWindow(QMainWindow):
@@ -302,17 +258,17 @@ class PreviewWindow(QMainWindow):
 		self._shadow_distance_slider.valueChanged.connect(self._schedule_preview_refresh)
 
 	def _apply_settings(self, settings: dict[str, object]) -> None:
-		self._template_edit.setText(_as_str(settings.get("template_path"), ""))
-		self._output_edit.setText(_as_str(settings.get("output_path"), str(DEFAULT_OUTPUT)))
-		self._top_text_edit.setText(_as_str(settings.get("top_text"), ""))
-		self._middle_text_edit.setText(_as_str(settings.get("middle_text"), ""))
-		self._bottom_text_edit.setText(_as_str(settings.get("bottom_text"), ""))
-		self._top_font_slider.setValue(_as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE))
-		self._middle_font_slider.setValue(_as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE))
-		self._bottom_font_slider.setValue(_as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE))
-		self._shadow_angle_slider.setValue(_as_int(settings.get("shadow_angle"), 45))
-		self._shadow_distance_slider.setValue(_as_int(settings.get("shadow_distance"), 6))
-		self._shadow_color = QColor(_as_str(settings.get("shadow_color"), DEFAULT_SHADOW_COLOR))
+		self._template_edit.setText(as_str(settings.get("template_path"), ""))
+		self._output_edit.setText(as_str(settings.get("output_path"), str(DEFAULT_OUTPUT)))
+		self._top_text_edit.setText(as_str(settings.get("top_text"), ""))
+		self._middle_text_edit.setText(as_str(settings.get("middle_text"), ""))
+		self._bottom_text_edit.setText(as_str(settings.get("bottom_text"), ""))
+		self._top_font_slider.setValue(as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE))
+		self._middle_font_slider.setValue(as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE))
+		self._bottom_font_slider.setValue(as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE))
+		self._shadow_angle_slider.setValue(as_int(settings.get("shadow_angle"), 45))
+		self._shadow_distance_slider.setValue(as_int(settings.get("shadow_distance"), 6))
+		self._shadow_color = QColor(as_str(settings.get("shadow_color"), DEFAULT_SHADOW_COLOR))
 		if not self._shadow_color.isValid():
 			self._shadow_color = QColor(DEFAULT_SHADOW_COLOR)
 		self._update_shadow_color_preview()
@@ -407,17 +363,17 @@ class PreviewWindow(QMainWindow):
 
 		try:
 			rendered_path = create_tag(
-				template_path=_as_str(settings.get("template_path"), ""),
-				top_text=_as_str(settings.get("top_text"), ""),
-				middle_text=_as_str(settings.get("middle_text"), ""),
-				bottom_text=_as_str(settings.get("bottom_text"), ""),
-				top_font_size=_as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE),
-				middle_font_size=_as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE),
-				bottom_font_size=_as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE),
-				output_path=_as_str(settings.get("output_path"), str(DEFAULT_OUTPUT)),
-				shadow_color=_as_str(settings.get("shadow_color"), DEFAULT_SHADOW_COLOR),
-				shadow_angle=_as_float(settings.get("shadow_angle"), 45.0),
-				shadow_distance=_as_float(settings.get("shadow_distance"), 6.0),
+				template_path=as_str(settings.get("template_path"), ""),
+				top_text=as_str(settings.get("top_text"), ""),
+				middle_text=as_str(settings.get("middle_text"), ""),
+				bottom_text=as_str(settings.get("bottom_text"), ""),
+				top_font_size=as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE),
+				middle_font_size=as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE),
+				bottom_font_size=as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE),
+				output_path=as_str(settings.get("output_path"), str(DEFAULT_OUTPUT)),
+				shadow_color=as_str(settings.get("shadow_color"), DEFAULT_SHADOW_COLOR),
+				shadow_angle=as_float(settings.get("shadow_angle"), 45.0),
+				shadow_distance=as_float(settings.get("shadow_distance"), 6.0),
 			)
 		except Exception as exc:
 			self._status.setText(str(exc))

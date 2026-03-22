@@ -1,5 +1,4 @@
 from pathlib import Path
-import csv
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QMovie, QPixmap, QResizeEvent
@@ -21,46 +20,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from lib.styles import get_shared_stylesheet
+from common.coercion import as_float, as_int, as_str
+from common.styles import get_shared_stylesheet
+from name_tag_generator.settings import get_default_preview_settings
 from .assets import HEADER_GIF_PATH, load_app_icon
+from .generator_csv import format_generator_csv_head, read_generator_csv
 from .worker import PdfWorker
 
 
 LOG_FLOAT_BREAKPOINT = 1120
 LOG_FLOAT_WIDTH = 360
-
-
-def _as_int(value: object, default: int) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        try:
-            return int(value)
-        except ValueError:
-            return default
-    return default
-
-
-def _as_float(value: object, default: float) -> float:
-    if isinstance(value, bool):
-        return float(value)
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        try:
-            return float(value)
-        except ValueError:
-            return default
-    return default
-
-
-def _as_str(value: object, default: str) -> str:
-    return value if isinstance(value, str) else default
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -82,8 +51,6 @@ class MainWindow(QMainWindow):
         self._update_content_layout(self.width())
 
     def _load_default_generator_settings(self) -> dict[str, object]:
-        from name_tag_generator.preview import get_default_preview_settings
-
         return get_default_preview_settings()
 
     def _apply_styles(self) -> None:
@@ -271,7 +238,7 @@ class MainWindow(QMainWindow):
             self._generator_preview_label.setText("No preview rendered yet. Open Edit Tag Preview to create one.")
             return
 
-        preview_path = Path(_as_str(self._generator_settings.get("output_path"), "")).expanduser()
+        preview_path = Path(as_str(self._generator_settings.get("output_path"), "")).expanduser()
         if not preview_path.is_file():
             self._generator_preview_label.clear()
             self._generator_preview_label.setText("Preview has not been rendered to disk yet. Re-render it from Edit Tag Preview.")
@@ -484,7 +451,7 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            rows = self._read_generator_csv(csv_path)
+            rows = read_generator_csv(csv_path)
         except Exception as exc:
             QMessageBox.critical(self, "CSV Import Error", str(exc))
             return
@@ -494,46 +461,8 @@ class MainWindow(QMainWindow):
         self._generator_csv_label.setText(
             f"Imported {len(rows)} rows from {csv_path}"
         )
-        self._generator_csv_head.setPlainText(self._format_generator_csv_head(rows))
+        self._generator_csv_head.setPlainText(format_generator_csv_head(rows))
         self._refresh_generator_preview()
-
-    def _read_generator_csv(self, csv_path: str) -> list[dict[str, str]]:
-        with open(csv_path, newline="", encoding="utf-8-sig") as csv_file:
-            reader = csv.DictReader(csv_file)
-            if reader.fieldnames is None:
-                raise ValueError("CSV file does not contain a header row.")
-
-            field_map = {field.strip().lower(): field for field in reader.fieldnames}
-            required_columns = ("top", "middle", "bottom")
-            missing_columns = [column for column in required_columns if column not in field_map]
-            if missing_columns:
-                raise ValueError(
-                    f"CSV must contain top, middle, and bottom columns. Missing: {', '.join(missing_columns)}"
-                )
-
-            rows: list[dict[str, str]] = []
-            for raw_row in reader:
-                row = {
-                    "top": (raw_row.get(field_map["top"]) or "").strip(),
-                    "middle": (raw_row.get(field_map["middle"]) or "").strip(),
-                    "bottom": (raw_row.get(field_map["bottom"]) or "").strip(),
-                }
-                if any(row.values()):
-                    rows.append(row)
-
-        if not rows:
-            raise ValueError("CSV does not contain any non-empty rows.")
-
-        return rows
-
-    def _format_generator_csv_head(self, rows: list[dict[str, str]]) -> str:
-        preview_rows = rows[:5]
-        lines = ["top | middle | bottom"]
-        for row in preview_rows:
-            lines.append(f"{row['top']} | {row['middle']} | {row['bottom']}")
-        if len(rows) > len(preview_rows):
-            lines.append(f"... and {len(rows) - len(preview_rows)} more rows")
-        return "\n".join(lines)
 
     def _generate_tags_from_csv(self) -> None:
         try:
@@ -558,22 +487,22 @@ class MainWindow(QMainWindow):
             return
 
         settings = dict(self._generator_settings)
-        extension = Path(_as_str(settings.get("output_path"), "output.png")).suffix or ".png"
+        extension = Path(as_str(settings.get("output_path"), "output.png")).suffix or ".png"
 
         for index, row in enumerate(self._generator_rows, start=1):
             output_path = Path(output_dir) / f"generated_tag_{index:02d}{extension}"
             create_tag(
-                template_path=_as_str(settings.get("template_path"), ""),
+                template_path=as_str(settings.get("template_path"), ""),
                 top_text=row["top"],
                 middle_text=row["middle"],
                 bottom_text=row["bottom"],
-                top_font_size=_as_int(settings.get("top_font_size"), 64),
-                middle_font_size=_as_int(settings.get("middle_font_size"), 96),
-                bottom_font_size=_as_int(settings.get("bottom_font_size"), 64),
+                top_font_size=as_int(settings.get("top_font_size"), 64),
+                middle_font_size=as_int(settings.get("middle_font_size"), 96),
+                bottom_font_size=as_int(settings.get("bottom_font_size"), 64),
                 output_path=output_path,
-                shadow_color=_as_str(settings.get("shadow_color"), "#c00000"),
-                shadow_angle=_as_float(settings.get("shadow_angle"), 45.0),
-                shadow_distance=_as_float(settings.get("shadow_distance"), 6.0),
+                shadow_color=as_str(settings.get("shadow_color"), "#c00000"),
+                shadow_angle=as_float(settings.get("shadow_angle"), 45.0),
+                shadow_distance=as_float(settings.get("shadow_distance"), 6.0),
             )
 
         QMessageBox.information(
