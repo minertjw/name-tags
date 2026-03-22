@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from .render_config import DEFAULT_MARGIN_CM
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = BASE_DIR / "preview_output.png"
@@ -7,6 +9,7 @@ DEFAULT_SHADOW_COLOR = "#c00000"
 DEFAULT_TOP_FONT_SIZE = 75
 DEFAULT_MIDDLE_FONT_SIZE = 120
 DEFAULT_BOTTOM_FONT_SIZE = 75
+DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM = 3.0
 
 
 def get_default_preview_settings() -> dict[str, object]:
@@ -20,6 +23,7 @@ def get_default_preview_settings() -> dict[str, object]:
         "top_font_size": DEFAULT_TOP_FONT_SIZE,
         "middle_font_size": DEFAULT_MIDDLE_FONT_SIZE,
         "bottom_font_size": DEFAULT_BOTTOM_FONT_SIZE,
+        "bottom_horizontal_margin_cm": DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM,
         "shadow_color": DEFAULT_SHADOW_COLOR,
         "shadow_angle": 45,
         "shadow_distance": 6,

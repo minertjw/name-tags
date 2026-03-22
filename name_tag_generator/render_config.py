@@ -52,3 +52,4 @@ class TextRegion:
     center_y: float
     font: FontLike
     lines: list[str]
+    margin_x: int

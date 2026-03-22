@@ -35,6 +35,7 @@ def create_tag(
 	shadow_angle: float = DEFAULT_SHADOW_ANGLE,
 	shadow_distance: float = DEFAULT_SHADOW_DISTANCE,
 	margin_cm: float = DEFAULT_MARGIN_CM,
+	bottom_horizontal_margin_cm: float | None = None,
 	font_size: int = DEFAULT_FONT_SIZE,
 	top_font_size: int | None = None,
 	middle_font_size: int | None = None,
@@ -62,8 +63,13 @@ def create_tag(
 		MIN_FONT_SIZE,
 		int(round(font_size * DEFAULT_SECONDARY_FONT_SCALE)),
 	)
+	resolved_bottom_horizontal_margin_cm = (
+		margin_cm if bottom_horizontal_margin_cm is None else bottom_horizontal_margin_cm
+	)
 	if margin_cm < 0:
 		raise ValueError("Margin must not be negative.")
+	if resolved_bottom_horizontal_margin_cm < 0:
+		raise ValueError("Bottom horizontal margin must not be negative.")
 	if resolved_top_font_size <= 0 or resolved_middle_font_size <= 0 or resolved_bottom_font_size <= 0:
 		raise ValueError("Font sizes must be greater than zero.")
 	if secondary_font_scale <= 0:
@@ -81,6 +87,7 @@ def create_tag(
 	dpi_y = float(dpi_info[1]) if len(dpi_info) > 1 else dpi_x
 	margin_x = cm_to_pixels(margin_cm, dpi_x)
 	margin_y = cm_to_pixels(margin_cm, dpi_y)
+	bottom_margin_x = cm_to_pixels(resolved_bottom_horizontal_margin_cm, dpi_x)
 	shadow_offset = shadow_offset_from_angle(shadow_angle, shadow_distance)
 
 	draw = ImageDraw.Draw(image)
@@ -99,6 +106,7 @@ def create_tag(
 		line_spacing,
 		margin_x,
 		margin_y,
+		bottom_margin_x,
 	)
 	for region in regions:
 		draw_text_block(
@@ -110,7 +118,7 @@ def create_tag(
 			text_color,
 			shadow_color,
 			shadow_offset,
-			margin_x,
+			region.margin_x,
 			line_spacing,
 		)
 

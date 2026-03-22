@@ -500,6 +500,10 @@ class MainWindow(QMainWindow):
                 top_font_size=as_int(settings.get("top_font_size"), 64),
                 middle_font_size=as_int(settings.get("middle_font_size"), 96),
                 bottom_font_size=as_int(settings.get("bottom_font_size"), 64),
+                bottom_horizontal_margin_cm=as_float(
+                    settings.get("bottom_horizontal_margin_cm"),
+                    3.0,
+                ),
                 output_path=output_path,
                 shadow_color=as_str(settings.get("shadow_color"), "#c00000"),
                 shadow_angle=as_float(settings.get("shadow_angle"), 45.0),

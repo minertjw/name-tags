@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 from PySide6.QtCore import QTimer, Qt, Signal
-from PySide6.QtGui import QColor, QIntValidator, QPixmap
+from PySide6.QtGui import QColor, QDoubleValidator, QIntValidator, QPixmap
 from PySide6.QtWidgets import (
 	QApplication,
 	QColorDialog,
@@ -26,6 +26,7 @@ from common.coercion import as_float, as_int, as_str
 from common.styles import get_shared_stylesheet
 from .fonts import get_font_options
 from .settings import (
+	DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM,
 	DEFAULT_BOTTOM_FONT_SIZE,
 	DEFAULT_MIDDLE_FONT_SIZE,
 	DEFAULT_OUTPUT,
@@ -133,6 +134,11 @@ class PreviewWindow(QMainWindow):
 			"MECHANICAL ENGINEERING",
 			DEFAULT_BOTTOM_FONT_SIZE,
 		)
+
+		self._bottom_horizontal_margin_edit = QLineEdit(str(DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM))
+		self._bottom_horizontal_margin_edit.setValidator(QDoubleValidator(0.0, 10.0, 2, self))
+		self._bottom_horizontal_margin_edit.setPlaceholderText("Bottom text left/right margin in cm")
+		form.addRow("Bottom left/right margin (cm)", self._bottom_horizontal_margin_edit)
 
 		self._output_edit = QLineEdit(str(DEFAULT_OUTPUT))
 		output_browse = QPushButton("Browse...")
@@ -281,6 +287,7 @@ class PreviewWindow(QMainWindow):
 		self._middle_font_slider.valueChanged.connect(self._schedule_preview_refresh)
 		self._bottom_text_edit.textChanged.connect(self._schedule_preview_refresh)
 		self._bottom_font_slider.valueChanged.connect(self._schedule_preview_refresh)
+		self._bottom_horizontal_margin_edit.textChanged.connect(self._schedule_preview_refresh)
 		self._output_edit.textChanged.connect(self._schedule_preview_refresh)
 		self._shadow_angle_slider.valueChanged.connect(self._schedule_preview_refresh)
 		self._shadow_distance_slider.valueChanged.connect(self._schedule_preview_refresh)
@@ -295,6 +302,9 @@ class PreviewWindow(QMainWindow):
 		self._top_font_slider.setValue(as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE))
 		self._middle_font_slider.setValue(as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE))
 		self._bottom_font_slider.setValue(as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE))
+		self._bottom_horizontal_margin_edit.setText(
+			str(as_float(settings.get("bottom_horizontal_margin_cm"), DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM))
+		)
 		self._shadow_angle_slider.setValue(as_int(settings.get("shadow_angle"), 45))
 		self._shadow_distance_slider.setValue(as_int(settings.get("shadow_distance"), 6))
 		self._shadow_color = QColor(as_str(settings.get("shadow_color"), DEFAULT_SHADOW_COLOR))
@@ -313,6 +323,10 @@ class PreviewWindow(QMainWindow):
 			"top_font_size": self._top_font_slider.value(),
 			"middle_font_size": self._middle_font_slider.value(),
 			"bottom_font_size": self._bottom_font_slider.value(),
+			"bottom_horizontal_margin_cm": as_float(
+				self._bottom_horizontal_margin_edit.text().strip(),
+				DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM,
+			),
 			"shadow_color": self._shadow_color.name(),
 			"shadow_angle": self._shadow_angle_slider.value(),
 			"shadow_distance": self._shadow_distance_slider.value(),
@@ -425,6 +439,10 @@ class PreviewWindow(QMainWindow):
 				top_font_size=as_int(settings.get("top_font_size"), DEFAULT_TOP_FONT_SIZE),
 				middle_font_size=as_int(settings.get("middle_font_size"), DEFAULT_MIDDLE_FONT_SIZE),
 				bottom_font_size=as_int(settings.get("bottom_font_size"), DEFAULT_BOTTOM_FONT_SIZE),
+				bottom_horizontal_margin_cm=as_float(
+					settings.get("bottom_horizontal_margin_cm"),
+					DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM,
+				),
 				output_path=as_str(settings.get("output_path"), str(DEFAULT_OUTPUT)),
 				shadow_color=as_str(settings.get("shadow_color"), DEFAULT_SHADOW_COLOR),
 				shadow_angle=as_float(settings.get("shadow_angle"), 45.0),

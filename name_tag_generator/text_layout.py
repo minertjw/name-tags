@@ -145,10 +145,11 @@ def build_text_regions(
     line_spacing: int,
     margin_x: int,
     margin_y: int,
+    bottom_margin_x: int | None = None,
 ) -> list[TextRegion]:
     image_width, image_height = image_size
-    max_text_width = max(1, image_width - (margin_x * 2))
     available_height = max(1, image_height - (margin_y * 2))
+    resolved_bottom_margin_x = margin_x if bottom_margin_x is None else bottom_margin_x
     text_values = {
         "top": top_text,
         "middle": middle_text,
@@ -167,6 +168,8 @@ def build_text_regions(
             continue
 
         region_font_size = max(MIN_FONT_SIZE, font_sizes[name])
+        region_margin_x = resolved_bottom_margin_x if name == "bottom" else margin_x
+        region_max_text_width = max(1, image_width - (region_margin_x * 2))
         region_max_height = max(1, int(round(available_height * height_ratio)))
         region_font, lines = fit_text_region(
             draw,
@@ -174,7 +177,7 @@ def build_text_regions(
             font_path,
             region_font_size,
             line_spacing,
-            max_text_width,
+            region_max_text_width,
             region_max_height,
         )
         regions.append(
@@ -182,6 +185,7 @@ def build_text_regions(
                 center_y=margin_y + (available_height * center_ratio),
                 font=region_font,
                 lines=lines,
+                margin_x=region_margin_x,
             )
         )
 
