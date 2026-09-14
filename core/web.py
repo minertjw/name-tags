@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 import tempfile
-import zipfile
 from pathlib import Path
 from typing import TypedDict
 from urllib.parse import urlparse
@@ -19,14 +18,13 @@ from name_tag_generator.text import create_tag
 from name_tag_generator.top_image import image_filename_from_text
 
 from name_tag_combiner.generator_csv import read_generator_csv_stream
-from name_tag_combiner.pdf import generate_combined_pdf, generate_split_pdfs
+from name_tag_combiner.pdf import generate_combined_pdf
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
-MAX_PDF_IMAGES = 500
 MAX_TOP_IMAGES = 500
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
 FONT_SUFFIXES = {".ttf", ".otf", ".ttc"}
@@ -164,8 +162,8 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 
         return _download(content, "preview.png", "image/png", attachment=False)
 
-    @app.post("/api/generator/batch")
-    def generator_batch():
+    @app.post("/api/generator/pdf")
+    def generator_pdf():
         try:
             settings = parse_render_settings(request.form)
             rows = _read_csv_upload(request.files.get("csv"))
@@ -180,81 +178,36 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                     _requested_image_names(rows),
                     work_dir / "top-images",
                 )
-                archive_buffer = io.BytesIO()
-                with zipfile.ZipFile(
-                    archive_buffer, "w", compression=zipfile.ZIP_DEFLATED
-                ) as archive:
-                    for index, row in enumerate(rows, start=1):
-                        output_name = f"generated_tag_{index:02d}.png"
-                        output_path = work_dir / output_name
-                        row_kwargs = settings.create_tag_kwargs()
-                        row_kwargs.update(
-                            top_text=row["top"],
-                            middle_text=row["middle"],
-                            bottom_text=row["bottom"],
+                generated_dir = work_dir / "generated"
+                output_dir = work_dir / "output"
+                generated_dir.mkdir()
+                output_dir.mkdir()
+                filename_width = max(2, len(str(len(rows))))
+                for index, row in enumerate(rows, start=1):
+                    output_path = generated_dir / f"generated_tag_{index:0{filename_width}d}.png"
+                    row_kwargs = settings.create_tag_kwargs()
+                    row_kwargs.update(
+                        top_text=row["top"],
+                        middle_text=row["middle"],
+                        bottom_text=row["bottom"],
+                    )
+                    try:
+                        create_tag(
+                            template_path,
+                            output_path=output_path,
+                            font_path=font_path,
+                            top_images=top_images,
+                            **row_kwargs,
                         )
-                        try:
-                            create_tag(
-                                template_path,
-                                output_path=output_path,
-                                font_path=font_path,
-                                top_images=top_images,
-                                **row_kwargs,
-                            )
-                        except (OSError, ValueError) as exc:
-                            raise ValueError(f"Could not render CSV row {index}: {exc}") from exc
-                        archive.write(output_path, output_name)
-                content = archive_buffer.getvalue()
+                    except (OSError, ValueError) as exc:
+                        raise ValueError(f"Could not render CSV row {index}: {exc}") from exc
+
+                generate_combined_pdf(str(generated_dir), str(output_dir), lambda _message: None)
+                content = (output_dir / "output_combined.pdf").read_bytes()
         except (OSError, UnicodeDecodeError, UnidentifiedImageError, ValueError) as exc:
             return jsonify(error=str(exc)), 400
 
-        return _download(content, "generated_name_tags.zip", "application/zip")
-
-    @app.post("/api/pdf")
-    def generate_pdf():
-        mode = request.form.get("mode", "split")
-        if mode not in {"split", "combined"}:
-            return jsonify(error="PDF mode must be split or combined."), 400
-
-        uploads = [upload for upload in request.files.getlist("images") if upload.filename]
-        if not uploads:
-            return jsonify(error="Choose at least one name tag image."), 400
-        if len(uploads) > MAX_PDF_IMAGES:
-            return jsonify(error=f"Choose no more than {MAX_PDF_IMAGES} images."), 400
-
-        try:
-            with tempfile.TemporaryDirectory(prefix="name-tags-pdf-") as temp_dir:
-                work_dir = Path(temp_dir)
-                input_dir = work_dir / "images"
-                output_dir = work_dir / "output"
-                input_dir.mkdir()
-                output_dir.mkdir()
-                sorted_uploads = sorted(uploads, key=lambda upload: Path(upload.filename).name)
-                for index, upload in enumerate(sorted_uploads):
-                    _save_image_upload(upload, input_dir, f"{index:06d}")
-
-                messages: list[str] = []
-                if mode == "combined":
-                    generate_combined_pdf(str(input_dir), str(output_dir), messages.append)
-                    output_path = output_dir / "output_combined.pdf"
-                    content = output_path.read_bytes()
-                    filename = output_path.name
-                    mimetype = "application/pdf"
-                else:
-                    generate_split_pdfs(str(input_dir), str(output_dir), messages.append)
-                    archive_buffer = io.BytesIO()
-                    with zipfile.ZipFile(
-                        archive_buffer, "w", compression=zipfile.ZIP_DEFLATED
-                    ) as archive:
-                        for output_path in sorted(output_dir.glob("output_batch_*.pdf")):
-                            archive.write(output_path, output_path.name)
-                    content = archive_buffer.getvalue()
-                    filename = "name_tag_pdfs.zip"
-                    mimetype = "application/zip"
-        except (OSError, UnidentifiedImageError, ValueError) as exc:
-            return jsonify(error=str(exc)), 400
-
-        return _download(content, filename, mimetype)
+        return _download(content, "name_tags.pdf", "application/pdf")
 
     return app
 

@@ -52,3 +52,6 @@ The application opens automatically in your default browser at
 An example [template.csv](template.csv) is included with the application. Open
 and edit it in Microsoft Excel, replacing the sample rows while keeping the
 existing column headers, then upload the saved CSV in the browser.
+
+Generating name tags downloads one print-ready PDF. The individual tag images
+are created in temporary storage and deleted automatically after the PDF is built.

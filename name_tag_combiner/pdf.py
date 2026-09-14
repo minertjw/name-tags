@@ -55,32 +55,6 @@ def _page_position(index: int) -> tuple[float, float]:
     return x, y
 
 
-def generate_split_pdfs(image_dir: str, output_dir: str, log: LogFn) -> None:
-    images = collect_images(image_dir)
-    if not images:
-        log(f"WARNING: No images found in {image_dir}")
-        return
-
-    for batch_index in range(0, len(images), IMAGES_PER_PAGE):
-        batch_images = images[batch_index : batch_index + IMAGES_PER_PAGE]
-        output_pdf = str(
-            Path(output_dir)
-            / f"output_batch_{batch_index // IMAGES_PER_PAGE + 1}.pdf"
-        )
-        c = canvas.Canvas(output_pdf, pagesize=A4)
-
-        for image_index, img_name in enumerate(batch_images):
-            x, y = _page_position(image_index)
-            img_path = Path(image_dir) / img_name
-            try:
-                draw_image(c, img_path, x, y)
-            except RuntimeError as exc:
-                log(f"WARNING: {exc}")
-
-        c.save()
-        log(f"PDF saved: {output_pdf}")
-
-
 def generate_combined_pdf(image_dir: str, output_dir: str, log: LogFn) -> None:
     images = collect_images(image_dir)
     if not images:

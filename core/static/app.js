@@ -37,19 +37,6 @@ resetBoxesButton.addEventListener("click", () => {
   schedulePreview();
 });
 
-document.querySelectorAll("[data-tab]").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll("[data-tab]").forEach((candidate) => {
-      const selected = candidate === tab;
-      candidate.classList.toggle("is-active", selected);
-      candidate.setAttribute("aria-selected", String(selected));
-      const panel = document.querySelector(`#${candidate.dataset.tab}`);
-      panel.hidden = !selected;
-      panel.classList.toggle("is-active", selected);
-    });
-  });
-});
-
 fontSelect.addEventListener("change", () => {
   customFontLabel.classList.toggle("is-hidden", fontSelect.value !== "custom");
   schedulePreview();
@@ -304,7 +291,7 @@ function updateGenerateTagsButton() {
 
 generateTagsButton.addEventListener("click", async () => {
   if (!generatorForm.reportValidity()) return;
-  await runDownload(generateTagsButton, "/api/generator/batch", generatorData(true), "generated_name_tags.zip", "Generating tags...");
+  await runDownload(generateTagsButton, "/api/generator/pdf", generatorData(true), "name_tags.pdf", "Building PDF...");
 });
 
 function renderCsvRows(rows) {
@@ -333,47 +320,6 @@ function renderCsvRows(rows) {
   container.replaceChildren(table);
   container.hidden = false;
 }
-
-const pdfForm = document.querySelector("#pdf-form");
-const pdfFilesInput = document.querySelector("#pdf-images");
-const pdfFolderInput = document.querySelector("#pdf-folder");
-const generatePdfButton = document.querySelector("#generate-pdf");
-let pdfFiles = [];
-
-[pdfFilesInput, pdfFolderInput].forEach((input) => input.addEventListener("change", () => {
-  pdfFiles = Array.from(input.files).filter((file) => /\.(png|jpe?g|bmp|gif)$/i.test(file.name));
-  const otherInput = input === pdfFilesInput ? pdfFolderInput : pdfFilesInput;
-  otherInput.value = "";
-  document.querySelector("#image-count").textContent = pdfFiles.length ? `${pdfFiles.length} ${pdfFiles.length === 1 ? "image" : "images"}` : "No images selected";
-  generatePdfButton.disabled = pdfFiles.length === 0;
-  logActivity(pdfFiles.length ? `${pdfFiles.length} images ready for layout.` : "Select name tag images to begin.", true);
-}));
-
-pdfForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!pdfFiles.length) return;
-  const data = new FormData();
-  pdfFiles.forEach((file) => data.append("images", file, file.name));
-  const mode = new FormData(pdfForm).get("mode");
-  data.append("mode", mode);
-  logActivity("Building print-ready pages...");
-  generatePdfButton.disabled = true;
-  const originalText = generatePdfButton.textContent;
-  generatePdfButton.textContent = "Generating...";
-  try {
-    const response = await fetch("/api/pdf", { method: "POST", body: data });
-    const blob = await response.blob();
-    if (!response.ok) throw new Error(await readError(blob));
-    const filename = mode === "combined" ? "output_combined.pdf" : "name_tag_pdfs.zip";
-    downloadBlob(blob, filename);
-    logActivity(`${filename} is ready.`);
-  } catch (error) {
-    logActivity(`Error: ${error.message}`);
-  } finally {
-    generatePdfButton.disabled = false;
-    generatePdfButton.textContent = originalText;
-  }
-});
 
 async function runDownload(button, url, data, filename, busyText) {
   const originalText = button.textContent;
@@ -414,13 +360,4 @@ function downloadBlob(blob, filename) {
 function setMessage(text, isError = false) {
   generatorMessage.textContent = text;
   generatorMessage.classList.toggle("is-error", isError);
-}
-
-function logActivity(text, replace = false) {
-  const log = document.querySelector("#activity-log");
-  const item = document.createElement("li");
-  item.textContent = text;
-  if (replace) log.replaceChildren(item);
-  else log.append(item);
-  log.scrollTop = log.scrollHeight;
 }
