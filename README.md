@@ -7,7 +7,7 @@ Requires Python 3.10 or newer.
 These setup and launch commands must be entered in a command-line terminal.
 Use Terminal on Linux or macOS, or PowerShell on Windows.
 
-From the project directory, create a virtual environment with a recognizable shell prompt:
+From the project directory, create a virtual environment with a recognisable shell prompt:
 
 ```bash
 python -m venv .venv --prompt name-tags
