@@ -3,17 +3,32 @@ const templateInput = document.querySelector("#template");
 const csvInput = document.querySelector("#csv-file");
 const fontSelect = document.querySelector("#font-id");
 const customFontLabel = document.querySelector("#custom-font-label");
-const previewImage = document.querySelector("#preview-image");
-const previewEmpty = document.querySelector("#preview-empty");
 const previewState = document.querySelector("#preview-state");
 const generatorMessage = document.querySelector("#generator-message");
 const generateTagsButton = document.querySelector("#generate-tags");
-const downloadPreviewButton = document.querySelector("#download-preview");
+const textBoxesInput = document.querySelector("#text-boxes");
+const resetBoxesButton = document.querySelector("#reset-boxes");
+const defaultTextBoxes = JSON.parse(textBoxesInput.value);
+let textBoxes = structuredClone(defaultTextBoxes);
 let previewTimer;
 let previewController;
-let previewUrl;
-let previewBlob;
+const previewUrls = {};
+const previewBlobs = {};
 let csvIsValid = false;
+const minimumBoxSize = 0.03;
+
+updateBoxOverlays();
+
+document.querySelectorAll(".text-box").forEach((element) => {
+  element.addEventListener("pointerdown", beginBoxInteraction);
+  element.addEventListener("keydown", adjustBoxWithKeyboard);
+});
+
+resetBoxesButton.addEventListener("click", () => {
+  textBoxes = structuredClone(defaultTextBoxes);
+  updateBoxOverlays();
+  schedulePreview();
+});
 
 document.querySelectorAll("[data-tab]").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -28,12 +43,6 @@ document.querySelectorAll("[data-tab]").forEach((tab) => {
   });
 });
 
-document.querySelectorAll("[data-sync]").forEach((control) => {
-  control.addEventListener("input", () => {
-    document.querySelector(`#${control.dataset.sync}`).value = control.value;
-  });
-});
-
 fontSelect.addEventListener("change", () => {
   customFontLabel.classList.toggle("is-hidden", fontSelect.value !== "custom");
   schedulePreview();
@@ -42,9 +51,113 @@ fontSelect.addEventListener("change", () => {
 generatorForm.addEventListener("input", schedulePreview);
 generatorForm.addEventListener("change", schedulePreview);
 templateInput.addEventListener("change", () => {
-  document.querySelector("#template-name").textContent = templateInput.files[0]?.name || "No template selected";
+  const template = templateInput.files[0];
+  document.querySelector("#template-name").textContent = template?.name || "No template selected";
+  document.querySelectorAll(".box-overlay").forEach((overlay) => {
+    overlay.hidden = !template;
+  });
+  if (template) updateTemplateAspectRatio(template);
   generateTagsButton.disabled = !(csvIsValid && templateInput.files.length);
 });
+
+function updateTemplateAspectRatio(file) {
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.addEventListener("load", () => {
+    document.querySelectorAll(".preview-stage").forEach((stage) => {
+      stage.style.aspectRatio = `${image.naturalWidth} / ${image.naturalHeight}`;
+    });
+    URL.revokeObjectURL(url);
+  });
+  image.addEventListener("error", () => URL.revokeObjectURL(url));
+  image.src = url;
+}
+
+function beginBoxInteraction(event) {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  const element = event.currentTarget;
+  const stageBounds = element.closest(".preview-stage").getBoundingClientRect();
+  const box = textBoxes.find((candidate) => candidate.name === element.dataset.boxName);
+  const startBox = { ...box };
+  const handle = event.target.dataset.handle || "move";
+  const startX = event.clientX;
+  const startY = event.clientY;
+  element.focus();
+  element.setPointerCapture(event.pointerId);
+
+  const move = (moveEvent) => {
+    const deltaX = (moveEvent.clientX - startX) / stageBounds.width;
+    const deltaY = (moveEvent.clientY - startY) / stageBounds.height;
+    resizeOrMoveBox(box, startBox, handle, deltaX, deltaY);
+    updateBoxOverlays();
+    previewState.textContent = "Changes pending";
+  };
+  const finish = () => {
+    element.removeEventListener("pointermove", move);
+    element.removeEventListener("pointerup", finish);
+    element.removeEventListener("pointercancel", finish);
+    schedulePreview();
+  };
+  element.addEventListener("pointermove", move);
+  element.addEventListener("pointerup", finish);
+  element.addEventListener("pointercancel", finish);
+}
+
+function resizeOrMoveBox(box, start, handle, deltaX, deltaY) {
+  if (handle === "move") {
+    box.top = clamp(start.top + deltaY, 0, 1 - start.height);
+    return;
+  }
+
+  let left = start.left;
+  let top = start.top;
+  let right = start.left + start.width;
+  let bottom = start.top + start.height;
+  if (handle.includes("w")) left = clamp(start.left + deltaX, 0, right - minimumBoxSize);
+  if (handle.includes("e")) right = clamp(right + deltaX, left + minimumBoxSize, 1);
+  if (handle.includes("n")) top = clamp(start.top + deltaY, 0, bottom - minimumBoxSize);
+  if (handle.includes("s")) bottom = clamp(bottom + deltaY, top + minimumBoxSize, 1);
+  box.left = left;
+  box.top = top;
+  box.width = right - left;
+  box.height = bottom - top;
+}
+
+function adjustBoxWithKeyboard(event) {
+  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+  if (!event.shiftKey && !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+  event.preventDefault();
+  const box = textBoxes.find((candidate) => candidate.name === event.currentTarget.dataset.boxName);
+  const amount = event.altKey ? 0.001 : 0.005;
+  if (event.shiftKey) {
+    if (event.key === "ArrowLeft") box.width = Math.max(minimumBoxSize, box.width - amount);
+    if (event.key === "ArrowRight") box.width = Math.min(1 - box.left, box.width + amount);
+    if (event.key === "ArrowUp") box.height = Math.max(minimumBoxSize, box.height - amount);
+    if (event.key === "ArrowDown") box.height = Math.min(1 - box.top, box.height + amount);
+  } else {
+    if (event.key === "ArrowUp") box.top = Math.max(0, box.top - amount);
+    if (event.key === "ArrowDown") box.top = Math.min(1 - box.height, box.top + amount);
+  }
+  updateBoxOverlays();
+  schedulePreview();
+}
+
+function updateBoxOverlays() {
+  textBoxes.forEach((box) => {
+    document.querySelectorAll(`[data-box-name="${box.name}"]`).forEach((element) => {
+      element.style.left = `${box.left * 100}%`;
+      element.style.top = `${box.top * 100}%`;
+      element.style.width = `${box.width * 100}%`;
+      element.style.height = `${box.height * 100}%`;
+    });
+  });
+  textBoxesInput.value = JSON.stringify(textBoxes);
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
 
 function schedulePreview() {
   window.clearTimeout(previewTimer);
@@ -66,21 +179,26 @@ async function renderPreview() {
   previewState.textContent = "Rendering";
   setMessage("");
   try {
-    const response = await fetch("/api/generator/preview", {
-      method: "POST",
-      body: generatorData(),
-      signal: previewController.signal,
-    });
-    const blob = await response.blob();
-    if (!response.ok) throw new Error(await readError(blob));
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewBlob = blob;
-    previewUrl = URL.createObjectURL(blob);
-    previewImage.src = previewUrl;
-    previewImage.hidden = false;
-    previewEmpty.hidden = true;
+    await Promise.all(["long", "short"].map(async (previewCase) => {
+      const data = generatorData();
+      data.set("preview_case", previewCase);
+      const response = await fetch("/api/generator/preview", {
+        method: "POST",
+        body: data,
+        signal: previewController.signal,
+      });
+      const blob = await response.blob();
+      if (!response.ok) throw new Error(await readError(blob));
+      if (previewUrls[previewCase]) URL.revokeObjectURL(previewUrls[previewCase]);
+      previewBlobs[previewCase] = blob;
+      previewUrls[previewCase] = URL.createObjectURL(blob);
+      const image = document.querySelector(`#preview-${previewCase}-image`);
+      image.src = previewUrls[previewCase];
+      image.hidden = false;
+      image.parentElement.querySelector(".preview-empty").hidden = true;
+      document.querySelector(`[data-preview-download="${previewCase}"]`).disabled = false;
+    }));
     previewState.textContent = "Up to date";
-    downloadPreviewButton.disabled = false;
   } catch (error) {
     if (error.name === "AbortError") return;
     previewState.textContent = "Could not render";
@@ -88,8 +206,12 @@ async function renderPreview() {
   }
 }
 
-downloadPreviewButton.addEventListener("click", () => {
-  if (previewBlob) downloadBlob(previewBlob, "name_tag_preview.png");
+document.querySelectorAll("[data-preview-download]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const previewCase = button.dataset.previewDownload;
+    const blob = previewBlobs[previewCase];
+    if (blob) downloadBlob(blob, `name_tag_${previewCase}_preview.png`);
+  });
 });
 
 csvInput.addEventListener("change", async () => {

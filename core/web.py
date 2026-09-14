@@ -4,6 +4,7 @@ import io
 import tempfile
 import zipfile
 from pathlib import Path
+from typing import TypedDict
 from urllib.parse import urlparse
 
 from flask import Flask, jsonify, render_template, request, send_file
@@ -12,6 +13,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
 from name_tag_generator.fonts import get_font_options
+from name_tag_generator.render_config import TEXT_BOX_SPECS
 from name_tag_generator.settings import get_default_preview_settings, parse_render_settings
 from name_tag_generator.text import create_tag
 
@@ -28,6 +30,26 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
 FONT_SUFFIXES = {".ttf", ".otf", ".ttc"}
 
 
+class PreviewText(TypedDict):
+    top_text: str
+    middle_text: str
+    bottom_text: str
+
+
+PREVIEW_CASES: dict[str, PreviewText] = {
+    "long": {
+        "top_text": "UNDERGRADUATE",
+        "middle_text": "ALEXANDRIA MONTGOMERY-WILLIAMS",
+        "bottom_text": "COMPUTER SYSTEMS ENGINEERING / COMPUTER SCIENCE",
+    },
+    "short": {
+        "top_text": "UNDERGRADUATE",
+        "middle_text": "SAM LEE",
+        "bottom_text": "MECHANICAL ENGINEERING",
+    },
+}
+
+
 def create_app(test_config: dict[str, object] | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_mapping(MAX_CONTENT_LENGTH=MAX_UPLOAD_BYTES)
@@ -41,6 +63,8 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
             return jsonify(error="This application only accepts local requests."), 403
         origin = request.headers.get("Origin")
         if request.method != "GET" and origin:
+            if not isinstance(origin, str):
+                return jsonify(error="Requests must originate from the local application."), 403
             origin_host = (urlparse(origin).hostname or "").lower()
             if origin_host not in {"127.0.0.1", "localhost", "::1"}:
                 return jsonify(error="Requests must originate from the local application."), 403
@@ -65,6 +89,16 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
             "index.html",
             font_options=font_options,
             defaults=get_default_preview_settings(),
+            text_boxes=[
+                {
+                    "name": name,
+                    "left": left,
+                    "top": top,
+                    "width": width,
+                    "height": height,
+                }
+                for name, left, top, width, height in TEXT_BOX_SPECS
+            ],
         )
 
     @app.get("/favicon.png")
@@ -101,6 +135,9 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
     def generator_preview():
         try:
             settings = parse_render_settings(request.form)
+            preview_case = request.form.get("preview_case", "long")
+            if preview_case not in PREVIEW_CASES:
+                raise ValueError("Preview case must be long or short.")
             with tempfile.TemporaryDirectory(prefix="name-tags-preview-") as temp_dir:
                 work_dir = Path(temp_dir)
                 template_path = _save_image_upload(
@@ -112,6 +149,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                     template_path,
                     output_path=output_path,
                     font_path=font_path,
+                    **PREVIEW_CASES[preview_case],
                     **settings.create_tag_kwargs(),
                 )
                 content = output_path.read_bytes()

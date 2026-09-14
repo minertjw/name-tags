@@ -1,39 +1,29 @@
 from dataclasses import dataclass
+import json
 import re
 from typing import Mapping
 
+from .render_config import DEFAULT_MIDDLE_MAX_FONT_SIZE, TEXT_BOX_SPECS, TextBoxSpec
+
 DEFAULT_SHADOW_COLOR = "#c00000"
-DEFAULT_TOP_FONT_SIZE = 75
-DEFAULT_MIDDLE_FONT_SIZE = 120
-DEFAULT_BOTTOM_FONT_SIZE = 75
-DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM = 3.0
+MIN_BOX_SIZE = 0.03
 
 
 @dataclass(frozen=True)
 class RenderSettings:
-    top_text: str
-    middle_text: str
-    bottom_text: str
-    top_font_size: int
-    middle_font_size: int
-    bottom_font_size: int
-    bottom_horizontal_margin_cm: float
     shadow_color: str
     shadow_angle: float
     shadow_distance: float
+    middle_max_font_size: int
+    text_boxes: tuple[TextBoxSpec, ...]
 
     def create_tag_kwargs(self) -> dict[str, object]:
         return {
-            "top_text": self.top_text,
-            "middle_text": self.middle_text,
-            "bottom_text": self.bottom_text,
-            "top_font_size": self.top_font_size,
-            "middle_font_size": self.middle_font_size,
-            "bottom_font_size": self.bottom_font_size,
-            "bottom_horizontal_margin_cm": self.bottom_horizontal_margin_cm,
             "shadow_color": self.shadow_color,
             "shadow_angle": self.shadow_angle,
             "shadow_distance": self.shadow_distance,
+            "middle_max_font_size": self.middle_max_font_size,
+            "text_boxes": self.text_boxes,
         }
 
 
@@ -68,32 +58,51 @@ def parse_render_settings(values: Mapping[str, str]) -> RenderSettings:
     if not re.fullmatch(r"#[0-9a-fA-F]{6}", shadow_color):
         raise ValueError("Shadow color must use the format #RRGGBB.")
 
+    text_boxes = _parse_text_boxes(values.get("text_boxes"))
+
     return RenderSettings(
-        top_text=values.get("top_text", str(defaults["top_text"]))[:500],
-        middle_text=values.get("middle_text", str(defaults["middle_text"]))[:500],
-        bottom_text=values.get("bottom_text", str(defaults["bottom_text"]))[:500],
-        top_font_size=parse_int("top_font_size", 12, 180),
-        middle_font_size=parse_int("middle_font_size", 12, 180),
-        bottom_font_size=parse_int("bottom_font_size", 12, 180),
-        bottom_horizontal_margin_cm=parse_float(
-            "bottom_horizontal_margin_cm", 0, 10
-        ),
         shadow_color=shadow_color,
         shadow_angle=parse_float("shadow_angle", -180, 180),
         shadow_distance=parse_float("shadow_distance", 0, 50),
+        middle_max_font_size=parse_int("middle_max_font_size", 12, 500),
+        text_boxes=text_boxes,
     )
+
+
+def _parse_text_boxes(raw_value: str | None) -> tuple[TextBoxSpec, ...]:
+    if raw_value is None or not raw_value.strip():
+        return TEXT_BOX_SPECS
+    try:
+        raw_boxes = json.loads(raw_value)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Text box settings are invalid.") from exc
+    if not isinstance(raw_boxes, list) or len(raw_boxes) != len(TEXT_BOX_SPECS):
+        raise ValueError("Text box settings must define top, middle, and bottom boxes.")
+
+    boxes: list[TextBoxSpec] = []
+    expected_names = [box[0] for box in TEXT_BOX_SPECS]
+    for raw_box, expected_name in zip(raw_boxes, expected_names):
+        if not isinstance(raw_box, dict) or raw_box.get("name") != expected_name:
+            raise ValueError("Text boxes must be ordered top, middle, and bottom.")
+        try:
+            left = float(raw_box["left"])
+            top = float(raw_box["top"])
+            width = float(raw_box["width"])
+            height = float(raw_box["height"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("Text box coordinates must be numbers.") from exc
+        if width < MIN_BOX_SIZE or height < MIN_BOX_SIZE:
+            raise ValueError("Text boxes must be at least 3% wide and high.")
+        if left < 0 or top < 0 or left + width > 1 or top + height > 1:
+            raise ValueError("Text boxes must stay within the template.")
+        boxes.append((expected_name, left, top, width, height))
+    return tuple(boxes)
 
 
 def get_default_preview_settings() -> dict[str, object]:
     return {
-        "top_text": "UNDERGRADUATE",
-        "middle_text": "JOHN SMITH",
-        "bottom_text": "MECHANICAL ENGINEERING",
-        "top_font_size": DEFAULT_TOP_FONT_SIZE,
-        "middle_font_size": DEFAULT_MIDDLE_FONT_SIZE,
-        "bottom_font_size": DEFAULT_BOTTOM_FONT_SIZE,
-        "bottom_horizontal_margin_cm": DEFAULT_BOTTOM_HORIZONTAL_MARGIN_CM,
         "shadow_color": DEFAULT_SHADOW_COLOR,
         "shadow_angle": 45,
         "shadow_distance": 6,
+        "middle_max_font_size": DEFAULT_MIDDLE_MAX_FONT_SIZE,
     }

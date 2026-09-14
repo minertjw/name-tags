@@ -50,29 +50,10 @@
           </section>
 
           <section class="control-section">
-            <div class="section-heading"><div><span class="step">02</span><h2>Copy</h2></div></div>
-            {% for region, label, default in [
-              ('top', 'Top line', defaults.top_text),
-              ('middle', 'Primary line', defaults.middle_text),
-              ('bottom', 'Bottom line', defaults.bottom_text)
-            ] %}
-            <div class="text-control">
-              <label for="{{ region }}-text">{{ label }}</label>
-              <input id="{{ region }}-text" name="{{ region }}_text" type="text" value="{{ default }}" maxlength="500">
-              <div class="range-line">
-                <input id="{{ region }}-font-size-range" data-sync="{{ region }}-font-size" type="range" min="12" max="180" value="{{ defaults[region + '_font_size'] }}" aria-label="{{ label }} font size">
-                <input id="{{ region }}-font-size" data-sync="{{ region }}-font-size-range" name="{{ region }}_font_size" type="number" min="12" max="180" value="{{ defaults[region + '_font_size'] }}" aria-label="{{ label }} font size in pixels">
-                <span>px</span>
-              </div>
-            </div>
-            {% endfor %}
-          </section>
-
-          <section class="control-section">
-            <div class="section-heading"><div><span class="step">03</span><h2>Finish</h2></div></div>
+            <div class="section-heading"><div><span class="step">02</span><h2>Finish</h2></div></div>
             <div class="field-row finish-grid">
-              <label>Bottom margin (cm)
-                <input name="bottom_horizontal_margin_cm" type="number" min="0" max="10" step="0.1" value="{{ defaults.bottom_horizontal_margin_cm }}">
+              <label>Maximum name size (px)
+                <input name="middle_max_font_size" type="number" min="12" max="500" step="1" value="{{ defaults.middle_max_font_size }}">
               </label>
               <label>Shadow color
                 <span class="color-field"><input name="shadow_color" type="color" value="{{ defaults.shadow_color }}"><span>Color</span></span>
@@ -87,7 +68,7 @@
           </section>
 
           <section class="control-section batch-section">
-            <div class="section-heading"><div><span class="step">04</span><h2>Generate List</h2></div><p id="csv-count">No CSV selected</p></div>
+            <div class="section-heading"><div><span class="step">03</span><h2>Generate List</h2></div><p id="csv-count">No CSV selected</p></div>
             <label class="file-control">
               <span>CSV with top, middle, and bottom columns</span>
               <input id="csv-file" name="csv" type="file" accept=".csv">
@@ -98,15 +79,57 @@
         </div>
 
         <aside class="preview-pane" aria-label="Name tag preview">
-          <div class="preview-heading"><span>Live preview</span><span id="preview-state" class="status-dot">Waiting for template</span></div>
-          <div class="preview-stage">
-            <img id="preview-image" alt="Rendered name tag preview" hidden>
-            <div id="preview-empty" class="empty-state">
-              <strong>Select a template</strong>
-              <span>Your rendered name tag will appear here.</span>
-            </div>
+          <div class="preview-heading">
+            <span>Template checks</span>
+            <span id="preview-state" class="status-dot">Waiting for template</span>
           </div>
-          <button id="download-preview" class="secondary-button" type="button" disabled>Download Preview</button>
+          <div class="box-toolbar">
+            <span>Drag boxes and handles to adjust text areas</span>
+            <button id="reset-boxes" type="button">Reset boxes</button>
+          </div>
+          <input id="text-boxes" name="text_boxes" type="hidden" value='{{ text_boxes | tojson }}'>
+          <div class="preview-pair">
+            <section class="preview-case">
+              <h3>Long name + double degree</h3>
+              <div class="preview-stage">
+                <img id="preview-long-image" alt="Template preview with a long name and double degree" hidden>
+                <div class="empty-state preview-empty">
+                  <strong>Select a template</strong>
+                </div>
+                <div class="box-overlay" aria-label="Resizable text areas" hidden>
+                  {% for box in text_boxes %}
+                  <div class="text-box text-box-{{ box.name }}" data-box-name="{{ box.name }}" tabindex="0" role="group" aria-label="{{ box.name | title }} text area. Drag vertically to move; use handles to resize.">
+                    <span class="text-box-label">{{ box.name }}</span>
+                    {% for handle in ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] %}
+                    <span class="resize-handle handle-{{ handle }}" data-handle="{{ handle }}" aria-hidden="true"></span>
+                    {% endfor %}
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              <button class="secondary-button preview-download" data-preview-download="long" type="button" disabled>Download Long Preview</button>
+            </section>
+            <section class="preview-case">
+              <h3>Short name + degree</h3>
+              <div class="preview-stage">
+                <img id="preview-short-image" alt="Template preview with a short name and degree" hidden>
+                <div class="empty-state preview-empty">
+                  <strong>Select a template</strong>
+                </div>
+                <div class="box-overlay" aria-label="Resizable text areas" hidden>
+                  {% for box in text_boxes %}
+                  <div class="text-box text-box-{{ box.name }}" data-box-name="{{ box.name }}" tabindex="0" role="group" aria-label="{{ box.name | title }} text area. Drag vertically to move; use handles to resize.">
+                    <span class="text-box-label">{{ box.name }}</span>
+                    {% for handle in ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] %}
+                    <span class="resize-handle handle-{{ handle }}" data-handle="{{ handle }}"></span>
+                    {% endfor %}
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              <button class="secondary-button preview-download" data-preview-download="short" type="button" disabled>Download Short Preview</button>
+            </section>
+          </div>
           <p id="generator-message" class="message" role="status" aria-live="polite"></p>
         </aside>
       </form>

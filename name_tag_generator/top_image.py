@@ -6,7 +6,7 @@ from .normalization import strip_wrapping_quotes
 from .render_config import (
     IMAGE_SUFFIXES,
     IMAGES_DIR,
-    TEXT_REGION_SPECS,
+    TEXT_BOX_SPECS,
     TOP_IMAGE_MAX_HEIGHT_RATIO,
     TOP_IMAGE_MAX_WIDTH_RATIO,
     TOP_IMAGE_VERTICAL_OFFSET_RATIO,
@@ -35,10 +35,10 @@ def draw_top_image(
 ) -> None:
     available_width = max(1, image.width - (margin_x * 2))
     available_height = max(1, image.height - (margin_y * 2))
-    _, center_ratio, _ = TEXT_REGION_SPECS[0]
+    _, _, top_ratio, _, height_ratio = TEXT_BOX_SPECS[0]
     max_width = max(1, int(round(available_width * TOP_IMAGE_MAX_WIDTH_RATIO)))
     max_height = max(1, int(round(available_height * TOP_IMAGE_MAX_HEIGHT_RATIO)))
-    region_center_y = margin_y + (available_height * center_ratio)
+    region_center_y = image.height * (top_ratio + (height_ratio / 2))
 
     with Image.open(image_path) as source_image:
         overlay = source_image.convert("RGBA")
