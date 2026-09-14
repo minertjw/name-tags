@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from .normalization import cm_to_pixels, default_shadow_distance, normalize_text, shadow_offset_from_angle
+from .normalization import cm_to_pixels, normalize_text, shadow_offset_from_angle
 from .render_config import (
 	DEFAULT_DPI,
 	DEFAULT_FONT_SIZE,
@@ -11,15 +11,12 @@ from .render_config import (
 	DEFAULT_SECONDARY_FONT_SCALE,
 	DEFAULT_SHADOW_ANGLE,
 	DEFAULT_SHADOW_COLOR,
+	DEFAULT_SHADOW_DISTANCE,
 	DEFAULT_TEXT_COLOR,
 	MIN_FONT_SIZE,
 )
 from .text_layout import build_text_regions, draw_text_block
 from .top_image import draw_top_image, resolve_image_filename
-
-
-DEFAULT_SHADOW_DISTANCE = default_shadow_distance()
-
 
 def create_tag(
 	template_path: str | Path,

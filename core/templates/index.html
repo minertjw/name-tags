@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UONES Name Tag Studio</title>
+  <link rel="icon" href="{{ url_for('favicon') }}" type="image/png">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <img src="{{ url_for('header_animation') }}" alt="" width="64" height="64">
+    <div>
+      <h1>Name Tag Studio</h1>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="tabs" role="tablist" aria-label="Application sections">
+      <button class="tab is-active" id="generator-tab" type="button" role="tab" aria-selected="true" aria-controls="generator-panel" data-tab="generator-panel">Generator</button>
+      <button class="tab" id="combiner-tab" type="button" role="tab" aria-selected="false" aria-controls="combiner-panel" data-tab="combiner-panel">PDF Combiner</button>
+    </div>
+
+    <section class="panel is-active" id="generator-panel" role="tabpanel" aria-labelledby="generator-tab">
+      <form id="generator-form" class="generator-grid">
+        <div class="editor-pane">
+          <section class="control-section">
+            <div class="section-heading">
+              <div><span class="step">01</span><h2>Source</h2></div>
+              <p id="template-name">No template selected</p>
+            </div>
+            <label class="file-control">
+              <span>Template image</span>
+              <input id="template" name="template" type="file" accept=".png,.jpg,.jpeg,.bmp,.gif" required>
+            </label>
+            <div class="field-row">
+              <label>Typeface
+                <select id="font-id" name="font_id">
+                  {% for font in font_options %}
+                  <option value="{{ font.id }}">{{ font.label }}</option>
+                  {% endfor %}
+                  <option value="custom">Custom font</option>
+                </select>
+              </label>
+              <label id="custom-font-label" class="is-hidden">Custom font
+                <input id="custom-font" name="custom_font" type="file" accept=".ttf,.otf,.ttc">
+              </label>
+            </div>
+          </section>
+
+          <section class="control-section">
+            <div class="section-heading"><div><span class="step">02</span><h2>Copy</h2></div></div>
+            {% for region, label, default in [
+              ('top', 'Top line', defaults.top_text),
+              ('middle', 'Primary line', defaults.middle_text),
+              ('bottom', 'Bottom line', defaults.bottom_text)
+            ] %}
+            <div class="text-control">
+              <label for="{{ region }}-text">{{ label }}</label>
+              <input id="{{ region }}-text" name="{{ region }}_text" type="text" value="{{ default }}" maxlength="500">
+              <div class="range-line">
+                <input id="{{ region }}-font-size-range" data-sync="{{ region }}-font-size" type="range" min="12" max="180" value="{{ defaults[region + '_font_size'] }}" aria-label="{{ label }} font size">
+                <input id="{{ region }}-font-size" data-sync="{{ region }}-font-size-range" name="{{ region }}_font_size" type="number" min="12" max="180" value="{{ defaults[region + '_font_size'] }}" aria-label="{{ label }} font size in pixels">
+                <span>px</span>
+              </div>
+            </div>
+            {% endfor %}
+          </section>
+
+          <section class="control-section">
+            <div class="section-heading"><div><span class="step">03</span><h2>Finish</h2></div></div>
+            <div class="field-row finish-grid">
+              <label>Bottom margin (cm)
+                <input name="bottom_horizontal_margin_cm" type="number" min="0" max="10" step="0.1" value="{{ defaults.bottom_horizontal_margin_cm }}">
+              </label>
+              <label>Shadow color
+                <span class="color-field"><input name="shadow_color" type="color" value="{{ defaults.shadow_color }}"><span>Color</span></span>
+              </label>
+              <label>Shadow angle
+                <input name="shadow_angle" type="number" min="-180" max="180" step="1" value="{{ defaults.shadow_angle }}">
+              </label>
+              <label>Shadow distance
+                <input name="shadow_distance" type="number" min="0" max="50" step="1" value="{{ defaults.shadow_distance }}">
+              </label>
+            </div>
+          </section>
+
+          <section class="control-section batch-section">
+            <div class="section-heading"><div><span class="step">04</span><h2>Generate List</h2></div><p id="csv-count">No CSV selected</p></div>
+            <label class="file-control">
+              <span>CSV with top, middle, and bottom columns</span>
+              <input id="csv-file" name="csv" type="file" accept=".csv">
+            </label>
+            <div id="csv-preview" class="data-preview" hidden></div>
+            <button id="generate-tags" class="primary-button" type="button" disabled>Download Generated Tags</button>
+          </section>
+        </div>
+
+        <aside class="preview-pane" aria-label="Name tag preview">
+          <div class="preview-heading"><span>Live preview</span><span id="preview-state" class="status-dot">Waiting for template</span></div>
+          <div class="preview-stage">
+            <img id="preview-image" alt="Rendered name tag preview" hidden>
+            <div id="preview-empty" class="empty-state">
+              <strong>Select a template</strong>
+              <span>Your rendered name tag will appear here.</span>
+            </div>
+          </div>
+          <button id="download-preview" class="secondary-button" type="button" disabled>Download Preview</button>
+          <p id="generator-message" class="message" role="status" aria-live="polite"></p>
+        </aside>
+      </form>
+    </section>
+
+    <section class="panel" id="combiner-panel" role="tabpanel" aria-labelledby="combiner-tab" hidden>
+      <div class="combiner-grid">
+        <form id="pdf-form" class="pdf-controls">
+          <div class="section-heading"><div><span class="step">01</span><h2>Choose Tags</h2></div><p id="image-count">No images selected</p></div>
+          <div class="picker-grid">
+            <label class="drop-zone" for="pdf-images">
+              <strong>Select image files</strong>
+              <span>PNG, JPEG, BMP, or GIF</span>
+              <input id="pdf-images" name="images" type="file" accept=".png,.jpg,.jpeg,.bmp,.gif" multiple>
+            </label>
+            <label class="drop-zone" for="pdf-folder">
+              <strong>Select a folder</strong>
+              <span>Available in supported browsers</span>
+              <input id="pdf-folder" type="file" accept=".png,.jpg,.jpeg,.bmp,.gif" webkitdirectory multiple>
+            </label>
+          </div>
+
+          <fieldset>
+            <legend><span class="step">02</span> Output</legend>
+            <label class="mode-option"><input type="radio" name="mode" value="split" checked><span><strong>Separate PDFs</strong><small>One file per sheet, delivered as a ZIP</small></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="combined"><span><strong>Combined PDF</strong><small>Every sheet in one print-ready document</small></span></label>
+          </fieldset>
+          <button id="generate-pdf" class="primary-button" type="submit" disabled>Generate Print-Ready PDF</button>
+        </form>
+
+        <aside class="activity-pane">
+          <div class="preview-heading"><span>Activity</span><span class="status-dot">Local processing</span></div>
+          <ol id="activity-log" class="activity-log" aria-live="polite">
+            <li>Select name tag images to begin.</li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

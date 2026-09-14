@@ -1,7 +1,5 @@
 import math
 
-from .render_config import DEFAULT_SHADOW_OFFSET
-
 
 def strip_wrapping_quotes(text: str) -> str:
     normalized = " ".join(text.split())
@@ -35,7 +33,3 @@ def shadow_offset_from_angle(angle_degrees: float, distance: float) -> tuple[int
         int(round(math.cos(radians) * distance)),
         int(round(math.sin(radians) * distance)),
     )
-
-
-def default_shadow_distance() -> float:
-    return round(math.hypot(*DEFAULT_SHADOW_OFFSET), 2)

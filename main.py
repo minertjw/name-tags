@@ -1,18 +1,33 @@
-import sys
-from PySide6.QtWidgets import QApplication
+import os
+import threading
+import webbrowser
 
-from name_tag_combiner.assets import load_app_icon
-from name_tag_combiner.window import MainWindow
+from werkzeug.serving import make_server
+
+from core.web import create_app
 
 
 def main():
-    app = QApplication(sys.argv)
-    app_icon = load_app_icon()
-    if app_icon is not None:
-        app.setWindowIcon(app_icon)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+    host = "127.0.0.1"
+    port = int(os.environ.get("NAME_TAGS_PORT", "5000"))
+    app = create_app()
+
+    try:
+        server = make_server(host, port, app, threaded=True)
+    except OSError as exc:
+        raise SystemExit(f"Unable to start the name tag app on {host}:{port}: {exc}") from exc
+
+    url = f"http://{host}:{port}/"
+    print(f"Name Tag Combiner is running at {url}")
+    print("Press Ctrl+C to stop.")
+    threading.Timer(0.25, webbrowser.open_new_tab, args=(url,)).start()
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopping Name Tag Combiner.")
+    finally:
+        server.shutdown()
 
 
 if __name__ == "__main__":
