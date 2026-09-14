@@ -55,9 +55,6 @@
               <label>Maximum name size (px)
                 <input name="middle_max_font_size" type="number" min="12" max="500" step="1" value="{{ defaults.middle_max_font_size }}">
               </label>
-              <label>Shadow color
-                <span class="color-field"><input name="shadow_color" type="color" value="{{ defaults.shadow_color }}"><span>Color</span></span>
-              </label>
               <label>Shadow angle
                 <input name="shadow_angle" type="number" min="-180" max="180" step="1" value="{{ defaults.shadow_angle }}">
               </label>
@@ -67,20 +64,54 @@
             </div>
           </section>
 
+          <section class="control-section">
+            <div class="section-heading"><div><span class="step">03</span><h2>Realm Colours</h2></div></div>
+            <div class="realm-colors">
+              {% for realm, label in [
+                ('civil', 'Civil / Environmental / Surveying'),
+                ('computer', 'Electrical / Computer / Medical'),
+                ('renewable', 'Chemical / Renewable'),
+                ('software', 'Software'),
+                ('mechanical', 'Mechanical / Mechatronics / Aerospace'),
+                ('other', 'Other'),
+                ('industry', 'Industry')
+              ] %}
+              <label class="realm-color">
+                <input name="realm_color_{{ realm }}" type="color" value="{{ defaults.realm_colors[realm] }}">
+                <span>{{ label }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </section>
+
           <section class="control-section batch-section">
-            <div class="section-heading"><div><span class="step">03</span><h2>Generate List</h2></div><p id="csv-count">No CSV selected</p></div>
+            <div class="section-heading"><div><span class="step">04</span><h2>Generate List</h2></div><p id="csv-count">No CSV selected</p></div>
             <label class="file-control">
               <span>CSV with top, middle, and bottom columns</span>
+              <span>Company logos will be required if "top" value ends in an image suffix</span>
               <input id="csv-file" name="csv" type="file" accept=".csv">
             </label>
             <div id="csv-preview" class="data-preview" hidden></div>
+            <section id="requested-images-panel" class="requested-images" aria-labelledby="requested-images-heading" hidden>
+              <div class="requested-images-heading">
+                <div>
+                  <h3 id="requested-images-heading">Requested top images</h3>
+                  <p id="requested-images-status" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+              <label id="requested-images-control" class="file-control">
+                <span>Provide images named in the CSV</span>
+                <input id="requested-images" name="top_images" type="file" accept=".png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff" multiple>
+              </label>
+              <ul id="requested-images-list" class="requested-images-list"></ul>
+            </section>
             <button id="generate-tags" class="primary-button" type="button" disabled>Download Generated Tags</button>
           </section>
         </div>
 
         <aside class="preview-pane" aria-label="Name tag preview">
           <div class="preview-heading">
-            <span>Template checks</span>
+            <span>Previews</span>
             <span id="preview-state" class="status-dot">Waiting for template</span>
           </div>
           <div class="box-toolbar">

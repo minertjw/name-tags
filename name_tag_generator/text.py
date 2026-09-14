@@ -1,15 +1,16 @@
 from pathlib import Path
+from typing import Mapping
 
 from PIL import Image, ImageDraw
 
 from .normalization import cm_to_pixels, normalize_text, shadow_offset_from_angle
+from .realms import REALM_COLORS, apply_realm_hue, realm_color
 from .render_config import (
 	DEFAULT_DPI,
 	DEFAULT_LINE_SPACING,
 	DEFAULT_MARGIN_CM,
 	DEFAULT_MIDDLE_MAX_FONT_SIZE,
 	DEFAULT_SHADOW_ANGLE,
-	DEFAULT_SHADOW_COLOR,
 	DEFAULT_SHADOW_DISTANCE,
 	DEFAULT_TEXT_COLOR,
 	MIN_FONT_SIZE,
@@ -28,15 +29,17 @@ def create_tag(
 	bottom_text: str = "",
 	font_path: str | Path | None = None,
 	text_color: str = DEFAULT_TEXT_COLOR,
-	shadow_color: str = DEFAULT_SHADOW_COLOR,
 	shadow_angle: float = DEFAULT_SHADOW_ANGLE,
 	shadow_distance: float = DEFAULT_SHADOW_DISTANCE,
 	margin_cm: float = DEFAULT_MARGIN_CM,
 	line_spacing: int = DEFAULT_LINE_SPACING,
 	text_boxes: tuple[TextBoxSpec, ...] = TEXT_BOX_SPECS,
 	middle_max_font_size: int = DEFAULT_MIDDLE_MAX_FONT_SIZE,
+	top_images: Mapping[str, Path] | None = None,
+	realm_colors: Mapping[str, str] = REALM_COLORS,
 ) -> Path:
-	top_image_path = resolve_image_filename(top_text)
+	top_image_path = resolve_image_filename(top_text, top_images)
+	resolved_realm_color = realm_color(top_text, bottom_text, realm_colors)
 	top_text = "" if top_image_path is not None else normalize_text(top_text)
 	middle_text = normalize_text(middle_text)
 	bottom_text = normalize_text(bottom_text)
@@ -59,6 +62,7 @@ def create_tag(
 	with Image.open(template) as source_image:
 		dpi_info = source_image.info.get("dpi", (DEFAULT_DPI, DEFAULT_DPI))
 		image = source_image.convert("RGBA")
+	apply_realm_hue(image, resolved_realm_color)
 
 	dpi_x = float(dpi_info[0]) if dpi_info else float(DEFAULT_DPI)
 	dpi_y = float(dpi_info[1]) if len(dpi_info) > 1 else dpi_x
@@ -68,7 +72,7 @@ def create_tag(
 
 	draw = ImageDraw.Draw(image)
 	if top_image_path is not None:
-		draw_top_image(image, top_image_path, margin_x, margin_y)
+		draw_top_image(image, top_image_path, text_boxes[0], text_boxes[1])
 	regions = build_text_regions(
 		draw,
 		image.size,
@@ -91,7 +95,7 @@ def create_tag(
 			region.lines,
 			region.font,
 			text_color,
-			shadow_color,
+			resolved_realm_color,
 			shadow_offset,
 			line_spacing,
 		)

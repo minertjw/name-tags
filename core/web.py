@@ -13,9 +13,10 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
 from name_tag_generator.fonts import get_font_options
-from name_tag_generator.render_config import TEXT_BOX_SPECS
+from name_tag_generator.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
 from name_tag_generator.settings import get_default_preview_settings, parse_render_settings
 from name_tag_generator.text import create_tag
+from name_tag_generator.top_image import image_filename_from_text
 
 from name_tag_combiner.generator_csv import read_generator_csv_stream
 from name_tag_combiner.pdf import generate_combined_pdf, generate_split_pdfs
@@ -26,6 +27,7 @@ MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
 MAX_PDF_IMAGES = 500
+MAX_TOP_IMAGES = 500
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
 FONT_SUFFIXES = {".ttf", ".otf", ".ttc"}
 
@@ -129,7 +131,11 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
         except (UnicodeDecodeError, ValueError) as exc:
             return jsonify(error=str(exc)), 400
 
-        return jsonify(row_count=len(rows), rows=rows[:5])
+        return jsonify(
+            row_count=len(rows),
+            rows=rows,
+            requested_images=_requested_image_names(rows),
+        )
 
     @app.post("/api/generator/preview")
     def generator_preview():
@@ -169,6 +175,11 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                     request.files.get("template"), work_dir, "template"
                 )
                 font_path = _resolve_font_upload(request, work_dir)
+                top_images = _save_requested_top_images(
+                    request.files.getlist("top_images"),
+                    _requested_image_names(rows),
+                    work_dir / "top-images",
+                )
                 archive_buffer = io.BytesIO()
                 with zipfile.ZipFile(
                     archive_buffer, "w", compression=zipfile.ZIP_DEFLATED
@@ -187,6 +198,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                                 template_path,
                                 output_path=output_path,
                                 font_path=font_path,
+                                top_images=top_images,
                                 **row_kwargs,
                             )
                         except (OSError, ValueError) as exc:
@@ -247,6 +259,47 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
     return app
 
 
+def _requested_image_names(rows: list[dict[str, str]]) -> list[str]:
+    requested: dict[str, str] = {}
+    for row in rows:
+        filename = image_filename_from_text(row["top"])
+        if filename is not None:
+            requested.setdefault(filename.casefold(), filename)
+    return list(requested.values())
+
+
+def _save_requested_top_images(
+    uploads,
+    requested_names: list[str],
+    directory: Path,
+) -> dict[str, Path]:
+    if len(requested_names) > MAX_TOP_IMAGES:
+        raise ValueError(f"CSV files may request no more than {MAX_TOP_IMAGES} unique images.")
+
+    requested = {name.casefold(): name for name in requested_names}
+    provided: dict[str, Path] = {}
+    if uploads:
+        directory.mkdir()
+    for index, upload in enumerate(uploads):
+        filename = Path(upload.filename or "").name
+        key = filename.casefold()
+        if key not in requested:
+            raise ValueError(f"Image {filename or '(unnamed)'} is not requested by the CSV.")
+        if key in provided:
+            raise ValueError(f"Image {requested[key]} was provided more than once.")
+        provided[key] = _save_image_upload(
+            upload,
+            directory,
+            f"top-image-{index:04d}",
+            allowed_suffixes=TOP_IMAGE_SUFFIXES,
+        )
+
+    missing = [name for key, name in requested.items() if key not in provided]
+    if missing:
+        raise ValueError(f"Provide the images requested by the CSV: {', '.join(missing)}")
+    return provided
+
+
 def _read_csv_upload(upload) -> list[dict[str, str]]:
     if upload is None or not upload.filename:
         raise ValueError("Choose a CSV file.")
@@ -256,12 +309,18 @@ def _read_csv_upload(upload) -> list[dict[str, str]]:
     return read_generator_csv_stream(text_stream)
 
 
-def _save_image_upload(upload, directory: Path, stem: str) -> Path:
+def _save_image_upload(
+    upload,
+    directory: Path,
+    stem: str,
+    *,
+    allowed_suffixes=IMAGE_SUFFIXES,
+) -> Path:
     if upload is None or not upload.filename:
         raise ValueError("Choose a template image.")
     suffix = Path(secure_filename(upload.filename)).suffix.lower()
-    if suffix not in IMAGE_SUFFIXES:
-        raise ValueError("Images must be PNG, JPEG, BMP, or GIF files.")
+    if suffix not in allowed_suffixes:
+        raise ValueError("The uploaded image format is not supported.")
     output_path = directory / f"{stem}{suffix}"
     upload.save(output_path)
     if output_path.stat().st_size > MAX_FILE_BYTES:

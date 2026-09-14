@@ -1,6 +1,11 @@
 const generatorForm = document.querySelector("#generator-form");
 const templateInput = document.querySelector("#template");
 const csvInput = document.querySelector("#csv-file");
+const requestedImagesPanel = document.querySelector("#requested-images-panel");
+const requestedImagesControl = document.querySelector("#requested-images-control");
+const requestedImagesInput = document.querySelector("#requested-images");
+const requestedImagesStatus = document.querySelector("#requested-images-status");
+const requestedImagesList = document.querySelector("#requested-images-list");
 const fontSelect = document.querySelector("#font-id");
 const customFontLabel = document.querySelector("#custom-font-label");
 const previewState = document.querySelector("#preview-state");
@@ -15,6 +20,8 @@ let previewController;
 const previewUrls = {};
 const previewBlobs = {};
 let csvIsValid = false;
+let requestedImageNames = [];
+let requestedImagesAreComplete = true;
 const minimumBoxSize = 0.03;
 
 updateBoxOverlays();
@@ -57,8 +64,10 @@ templateInput.addEventListener("change", () => {
     overlay.hidden = !template;
   });
   if (template) updateTemplateAspectRatio(template);
-  generateTagsButton.disabled = !(csvIsValid && templateInput.files.length);
+  updateGenerateTagsButton();
 });
+
+requestedImagesInput.addEventListener("change", updateRequestedImages);
 
 function updateTemplateAspectRatio(file) {
   const url = URL.createObjectURL(file);
@@ -169,7 +178,10 @@ function schedulePreview() {
 function generatorData(includeCsv = false) {
   const data = new FormData(generatorForm);
   if (fontSelect.value === "custom") data.set("font_id", "0");
-  if (!includeCsv) data.delete("csv");
+  if (!includeCsv) {
+    data.delete("csv");
+    data.delete("top_images");
+  }
   return data;
 }
 
@@ -216,7 +228,11 @@ document.querySelectorAll("[data-preview-download]").forEach((button) => {
 
 csvInput.addEventListener("change", async () => {
   csvIsValid = false;
-  generateTagsButton.disabled = true;
+  requestedImageNames = [];
+  requestedImagesAreComplete = true;
+  requestedImagesInput.value = "";
+  requestedImagesPanel.hidden = true;
+  updateGenerateTagsButton();
   document.querySelector("#csv-preview").hidden = true;
   const file = csvInput.files[0];
   document.querySelector("#csv-count").textContent = file ? "Validating..." : "No CSV selected";
@@ -228,15 +244,63 @@ csvInput.addEventListener("change", async () => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
     csvIsValid = true;
+    requestedImageNames = result.requested_images;
     document.querySelector("#csv-count").textContent = `${result.row_count} ${result.row_count === 1 ? "row" : "rows"}`;
     renderCsvRows(result.rows);
-    generateTagsButton.disabled = !templateInput.files.length;
+    requestedImagesPanel.hidden = false;
+    updateRequestedImages();
     setMessage("");
   } catch (error) {
     document.querySelector("#csv-count").textContent = "Invalid CSV";
+    updateGenerateTagsButton();
     setMessage(error.message, true);
   }
 });
+
+function updateRequestedImages() {
+  const requestedByKey = new Map(requestedImageNames.map((name) => [name.toLowerCase(), name]));
+  const suppliedCounts = new Map();
+  const unexpected = [];
+  Array.from(requestedImagesInput.files).forEach((file) => {
+    const key = file.name.toLowerCase();
+    suppliedCounts.set(key, (suppliedCounts.get(key) || 0) + 1);
+    if (!requestedByKey.has(key)) unexpected.push(file.name);
+  });
+
+  const missing = requestedImageNames.filter((name) => !suppliedCounts.has(name.toLowerCase()));
+  const duplicates = requestedImageNames.filter((name) => suppliedCounts.get(name.toLowerCase()) > 1);
+  requestedImagesAreComplete = missing.length === 0 && unexpected.length === 0 && duplicates.length === 0;
+  requestedImagesControl.hidden = requestedImageNames.length === 0;
+  requestedImagesList.replaceChildren(...requestedImageNames.map((name) => {
+    const item = document.createElement("li");
+    const supplied = suppliedCounts.has(name.toLowerCase());
+    item.className = supplied ? "is-provided" : "is-missing";
+    item.textContent = `${name} — ${supplied ? "provided" : "missing"}`;
+    return item;
+  }));
+
+  if (requestedImageNames.length === 0) {
+    requestedImagesStatus.textContent = "No top images are requested by this CSV.";
+    requestedImagesStatus.className = "is-complete";
+  } else if (unexpected.length) {
+    requestedImagesStatus.textContent = `Not requested by the CSV: ${unexpected.join(", ")}`;
+    requestedImagesStatus.className = "is-incomplete";
+  } else if (duplicates.length) {
+    requestedImagesStatus.textContent = `Provided more than once: ${duplicates.join(", ")}`;
+    requestedImagesStatus.className = "is-incomplete";
+  } else if (missing.length) {
+    requestedImagesStatus.textContent = `${missing.length} ${missing.length === 1 ? "image is" : "images are"} still missing.`;
+    requestedImagesStatus.className = "is-incomplete";
+  } else {
+    requestedImagesStatus.textContent = "All requested images have been provided.";
+    requestedImagesStatus.className = "is-complete";
+  }
+  updateGenerateTagsButton();
+}
+
+function updateGenerateTagsButton() {
+  generateTagsButton.disabled = !(csvIsValid && templateInput.files.length && requestedImagesAreComplete);
+}
 
 generateTagsButton.addEventListener("click", async () => {
   if (!generatorForm.reportValidity()) return;
@@ -247,7 +311,7 @@ function renderCsvRows(rows) {
   const container = document.querySelector("#csv-preview");
   const table = document.createElement("table");
   const head = document.createElement("tr");
-  ["Top", "Middle", "Bottom"].forEach((label) => {
+  ["Image/Stage", "Name", "Title/Degree"].forEach((label) => {
     const cell = document.createElement("th");
     cell.textContent = label;
     head.append(cell);

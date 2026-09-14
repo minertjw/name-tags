@@ -49,6 +49,11 @@ input[type="file"]::file-selector-button { margin-right: 10px; border: 0; border
 .finish-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .color-field { display: flex; min-height: 42px; align-items: center; gap: 8px; border: 1px solid #48484d; border-radius: 4px; background: var(--field); padding: 5px 9px; }
 .color-field input { width: 28px; height: 28px; border: 0; padding: 0; background: none; }
+.realm-colors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+.realm-color { min-height: 46px; display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--field); padding: 7px 9px; }
+.realm-color:last-child { grid-column: 1 / -1; }
+.realm-color input { width: 30px; height: 30px; border: 0; padding: 0; background: transparent; }
+.realm-color span { line-height: 1.25; }
 .preview-pane { position: sticky; top: 20px; padding: 20px; }
 .preview-heading { margin-bottom: 14px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
 .status-dot { color: var(--muted); font: 400 0.7rem "Courier New", monospace; text-transform: none; }
@@ -82,10 +87,21 @@ input[type="file"]::file-selector-button { margin-right: 10px; border: 0; border
 .primary-button:hover:not(:disabled) { background: var(--accent-dark); }
 .secondary-button { width: 100%; margin-top: 14px; border: 1px solid var(--accent); background: transparent; color: var(--accent-bright); }
 button:disabled { cursor: not-allowed; opacity: 0.48; }
-.data-preview { margin: 14px 0; overflow-x: auto; border: 1px solid var(--line); }
+.data-preview { max-height: 180px; margin: 14px 0; overflow: auto; border: 1px solid var(--line); }
 .data-preview table { width: 100%; border-collapse: collapse; font: 0.76rem "Courier New", monospace; }
 .data-preview th, .data-preview td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
-.data-preview th { background: var(--surface-raised); }
+.data-preview th { position: sticky; top: 0; z-index: 1; background: var(--surface-raised); }
+.requested-images { margin: 16px 0; padding: 16px; border: 1px solid var(--line); background: var(--field); }
+.requested-images [hidden] { display: none; }
+.requested-images-heading h3 { margin: 0; font-size: 0.85rem; }
+.requested-images-heading p { margin: 5px 0 0; color: var(--muted); font-size: 0.76rem; }
+.requested-images-heading p.is-incomplete { color: var(--error); }
+.requested-images-heading p.is-complete { color: var(--ink); }
+.requested-images .file-control { margin-top: 14px; }
+.requested-images-list { display: grid; gap: 7px; margin: 14px 0 0; padding: 0; list-style: none; font: 0.76rem "Courier New", monospace; }
+.requested-images-list li { position: relative; padding-left: 18px; overflow-wrap: anywhere; }
+.requested-images-list li::before { position: absolute; left: 0; content: "×"; color: var(--error); font-weight: 700; }
+.requested-images-list li.is-provided::before { content: "✓"; color: var(--ink); }
 .is-hidden { display: none; }
 .combiner-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start; }
 .pdf-controls { padding: 24px; }
@@ -103,4 +119,4 @@ fieldset legend { margin-bottom: 12px; }
 .activity-log li::marker { color: var(--accent-bright); }
 @media (max-width: 1119px) { .combiner-grid { grid-template-columns: 1fr; } .activity-log { min-height: 180px; } }
 @media (max-width: 850px) { .generator-grid { grid-template-columns: 1fr; } .preview-pane { position: static; grid-row: 1; } .finish-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .app-header { min-height: 86px; padding: 14px 18px; } .app-header img { width: 52px; height: 52px; } .workspace { padding: 18px 10px 40px; } .tab { flex: 1; padding-inline: 8px; } .control-section, .preview-pane, .pdf-controls, .activity-pane { padding: 16px; } .field-row, .finish-grid, .picker-grid { grid-template-columns: 1fr; } .box-toolbar { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 560px) { .app-header { min-height: 86px; padding: 14px 18px; } .app-header img { width: 52px; height: 52px; } .workspace { padding: 18px 10px 40px; } .tab { flex: 1; padding-inline: 8px; } .control-section, .preview-pane, .pdf-controls, .activity-pane { padding: 16px; } .field-row, .finish-grid, .picker-grid, .realm-colors { grid-template-columns: 1fr; } .realm-color:last-child { grid-column: auto; } .box-toolbar { align-items: flex-start; flex-direction: column; } }
