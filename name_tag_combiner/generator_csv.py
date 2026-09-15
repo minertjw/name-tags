@@ -5,6 +5,7 @@ from typing import TextIO
 GeneratorRow = dict[str, str]
 MAX_GENERATOR_ROWS = 5000
 MAX_FIELD_LENGTH = 500
+GENERATOR_TYPES = {"uones", "nuches", "ausimm", "nuwie", "student", "industry"}
 
 
 def read_generator_csv_stream(csv_file: TextIO) -> list[GeneratorRow]:
@@ -16,21 +17,27 @@ def read_generator_csv_stream(csv_file: TextIO) -> list[GeneratorRow]:
     if len(normalized_fields) != len(set(normalized_fields)):
         raise ValueError("CSV column names must be unique.")
     field_map = dict(zip(normalized_fields, reader.fieldnames))
-    required_columns = ("top", "middle", "bottom")
+    required_columns = ("type", "name", "header")
     missing_columns = [column for column in required_columns if column not in field_map]
     if missing_columns:
         raise ValueError(
-            f"CSV must contain top, middle, and bottom columns. Missing: {', '.join(missing_columns)}"
+            f"CSV must contain type, name, and header columns. Missing: {', '.join(missing_columns)}"
         )
 
     rows: list[GeneratorRow] = []
     for raw_row in reader:
         row = {
-            "top": (raw_row.get(field_map["top"]) or "").strip(),
-            "middle": (raw_row.get(field_map["middle"]) or "").strip(),
-            "bottom": (raw_row.get(field_map["bottom"]) or "").strip(),
+            "type": (raw_row.get(field_map["type"]) or "").strip().casefold(),
+            "name": (raw_row.get(field_map["name"]) or "").strip(),
+            "header": (raw_row.get(field_map["header"]) or "").strip(),
         }
         if any(row.values()):
+            if row["type"] not in GENERATOR_TYPES:
+                raise ValueError(
+                    f"CSV type must be one of: {', '.join(sorted(GENERATOR_TYPES))}."
+                )
+            if not row["name"] or not row["header"]:
+                raise ValueError("CSV rows must contain type, name, and header values.")
             if any(len(value) > MAX_FIELD_LENGTH for value in row.values()):
                 raise ValueError(
                     f"CSV fields must contain no more than {MAX_FIELD_LENGTH} characters."

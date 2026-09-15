@@ -33,7 +33,7 @@ def draw_footer_logos(image: Image.Image) -> None:
     cell_width = max(1, available_width // len(logo_paths))
 
     for index, logo_path in enumerate(logo_paths):
-        logo = _load_trimmed_logo(logo_path)
+        logo = load_trimmed_logo(logo_path)
         logo.thumbnail((cell_width, max_height), Image.Resampling.LANCZOS)
         cell_left = side_margin + index * (cell_width + gap)
         left = cell_left + (cell_width - logo.width) // 2
@@ -44,7 +44,7 @@ def draw_footer_logos(image: Image.Image) -> None:
         image.alpha_composite(logo, (left, top))
 
 
-def _load_trimmed_logo(logo_path: Path) -> Image.Image:
+def load_trimmed_logo(logo_path: Path) -> Image.Image:
     with Image.open(logo_path) as source:
         logo = source.convert("RGBA")
 

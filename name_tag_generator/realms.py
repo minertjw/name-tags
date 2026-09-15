@@ -32,14 +32,15 @@ def classify_realm(top_text: str, bottom_text: str) -> str:
     if image_filename_from_text(top_text) is not None:
         return "industry"
 
-    normalized_bottom = " ".join(bottom_text.casefold().split())
+    classification_text = bottom_text or top_text
+    normalized_text = " ".join(classification_text.casefold().split())
     computer_science_matches = list(
-        re.finditer(r"\bcomputer\s+science\b", normalized_bottom)
+        re.finditer(r"\bcomputer\s+science\b", normalized_text)
     )
     matches = [(match.start(), "other") for match in computer_science_matches]
     for realm, keywords in _REALM_KEYWORDS:
         for keyword in keywords:
-            for match in re.finditer(rf"\b{re.escape(keyword)}\b", normalized_bottom):
+            for match in re.finditer(rf"\b{re.escape(keyword)}\b", normalized_text):
                 if keyword == "computer" and any(
                     phrase.start() <= match.start() < phrase.end()
                     for phrase in computer_science_matches

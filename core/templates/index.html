@@ -82,20 +82,20 @@
           <section class="control-section batch-section">
             <div class="section-heading"><div><span class="step">04</span><h2>Generate List</h2></div><p id="csv-count">No CSV selected</p></div>
             <label class="file-control">
-              <span>CSV with top, middle, and bottom columns</span>
-              <span>Company logos will be required if "top" value ends in an image suffix</span>
+              <span>CSV with type, name, and header columns</span>
+              <span>Industry rows require an image named in the header column</span>
               <input id="csv-file" name="csv" type="file" accept=".csv">
             </label>
             <div id="csv-preview" class="data-preview" hidden></div>
             <section id="requested-images-panel" class="requested-images" aria-labelledby="requested-images-heading" hidden>
               <div class="requested-images-heading">
                 <div>
-                  <h3 id="requested-images-heading">Requested top images</h3>
+                  <h3 id="requested-images-heading">Requested industry images</h3>
                   <p id="requested-images-status" role="status" aria-live="polite"></p>
                 </div>
               </div>
               <label id="requested-images-control" class="file-control">
-                <span>Provide images named in the CSV</span>
+                <span>Provide images named in the industry headers</span>
                 <input id="requested-images" name="top_images" type="file" accept=".png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff" multiple>
               </label>
               <ul id="requested-images-list" class="requested-images-list"></ul>
@@ -116,9 +116,9 @@
           <input id="text-boxes" name="text_boxes" type="hidden" value='{{ text_boxes | tojson }}'>
           <div class="preview-pair">
             <section class="preview-case">
-              <h3>Long name + double degree</h3>
+              <h3>Long name + organization title</h3>
               <div class="preview-stage">
-                <img id="preview-long-image" alt="Template preview with a long name and double degree" hidden>
+                <img id="preview-long-image" alt="Template preview with a long name and organization title" hidden>
                 <div class="empty-state preview-empty">
                   <strong>Default template</strong>
                 </div>
@@ -136,7 +136,7 @@
               <button class="secondary-button preview-download" data-preview-download="long" type="button" disabled>Download Long Preview</button>
             </section>
             <section class="preview-case">
-              <h3>Short name + degree</h3>
+              <h3>Short name + student degree</h3>
               <div class="preview-stage">
                 <img id="preview-short-image" alt="Template preview with a short name and degree" hidden>
                 <div class="empty-state preview-empty">

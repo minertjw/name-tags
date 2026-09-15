@@ -308,7 +308,7 @@ function renderCsvRows(rows) {
   const container = document.querySelector("#csv-preview");
   const table = document.createElement("table");
   const head = document.createElement("tr");
-  ["Image/Stage", "Name", "Title/Degree"].forEach((label) => {
+  ["Type", "Name", "Header"].forEach((label) => {
     const cell = document.createElement("th");
     cell.textContent = label;
     head.append(cell);
@@ -319,7 +319,7 @@ function renderCsvRows(rows) {
   const body = document.createElement("tbody");
   rows.forEach((row) => {
     const line = document.createElement("tr");
-    [row.top, row.middle, row.bottom].forEach((value) => {
+    [row.type, row.name, row.header].forEach((value) => {
       const cell = document.createElement("td");
       cell.textContent = value;
       line.append(cell);

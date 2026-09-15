@@ -49,9 +49,14 @@ The application opens automatically in your default browser at
 `http://127.0.0.1:5000`. Keep the terminal open while using it, and press
 `Ctrl+C` in the terminal to stop the server.
 
-An example [template.csv](template.csv) is included with the application. Open
-and edit it in Microsoft Excel, replacing the sample rows while keeping the
-existing column headers, then upload the saved CSV in the browser.
+An example [template.csv](template.csv) is included with the application. The
+CSV must contain `type,name,header` columns. `type` must be `uones`, `nuches`,
+`ausimm`, `nuwie`, `student`, or `industry`. Organization rows use `header` as
+the position title and add the matching bundled logo to its left. Student rows
+use `header` as the degree. Industry rows use `header` as an image filename;
+upload all such images when prompted. `name` is printed in the middle field.
+Open the file in Microsoft Excel, replace the sample rows, and upload the saved
+CSV in the browser.
 
 Generating name tags downloads one print-ready PDF. The individual tag images
 are created in temporary storage and deleted automatically after the PDF is built.

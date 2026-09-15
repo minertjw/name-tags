@@ -46,6 +46,7 @@ FontLike = ImageFont.ImageFont | ImageFont.FreeTypeFont
 
 @dataclass(frozen=True)
 class TextRegion:
+    name: str
     left: int
     top: int
     width: int

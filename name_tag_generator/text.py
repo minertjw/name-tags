@@ -18,7 +18,7 @@ from .render_config import (
 	TEXT_BOX_SPECS,
 	TextBoxSpec,
 )
-from .text_layout import build_text_regions, draw_text_block
+from .text_layout import build_text_regions, draw_text_block, draw_text_block_with_logo
 from .top_image import draw_top_image, resolve_image_filename
 
 def create_tag(
@@ -28,6 +28,7 @@ def create_tag(
 	top_text: str = "",
 	middle_text: str = "",
 	bottom_text: str = "",
+	top_logo_path: str | Path | None = None,
 	font_path: str | Path | None = None,
 	text_color: str = DEFAULT_TEXT_COLOR,
 	shadow_angle: float = DEFAULT_SHADOW_ANGLE,
@@ -85,8 +86,15 @@ def create_tag(
 		shadow_offset,
 		text_boxes,
 		middle_max_font_size,
+		Path(top_logo_path) if top_logo_path is not None else None,
 	)
 	for region in regions:
+		if region.name == "top" and top_logo_path is not None:
+			draw_text_block_with_logo(
+				image, region, Path(top_logo_path), text_color, resolved_realm_color,
+				shadow_offset, line_spacing,
+			)
+			continue
 		draw_text_block(
 			draw,
 			region.left,

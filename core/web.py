@@ -12,6 +12,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
 from name_tag_generator.fonts import get_font_options
+from name_tag_generator.footer_logos import LOGOS_DIR
 from name_tag_generator.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
 from name_tag_generator.settings import get_default_preview_settings, parse_render_settings
 from name_tag_generator.text import create_tag
@@ -31,22 +32,22 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
 FONT_SUFFIXES = {".ttf", ".otf", ".ttc"}
 
 
-class PreviewText(TypedDict):
-    top_text: str
-    middle_text: str
-    bottom_text: str
+class PreviewRow(TypedDict):
+    type: str
+    name: str
+    header: str
 
 
-PREVIEW_CASES: dict[str, PreviewText] = {
+PREVIEW_CASES: dict[str, PreviewRow] = {
     "long": {
-        "top_text": "UNDERGRADUATE",
-        "middle_text": "ALEXANDRIA MONTGOMERY-WILLIAMS",
-        "bottom_text": "COMPUTER SYSTEMS ENGINEERING / COMPUTER SCIENCE",
+        "type": "uones",
+        "name": "ALEXANDRIA MONTGOMERY-WILLIAMS",
+        "header": "Conference President",
     },
     "short": {
-        "top_text": "UNDERGRADUATE",
-        "middle_text": "SAM LEE",
-        "bottom_text": "MECHANICAL ENGINEERING",
+        "type": "student",
+        "name": "SAM LEE",
+        "header": "Mechanical Engineering",
     },
 }
 
@@ -154,11 +155,18 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                 )
                 font_path = _resolve_font_upload(request, work_dir)
                 output_path = work_dir / "preview.png"
+                preview_row = PREVIEW_CASES[preview_case]
+                preview_kwargs = {
+                    "top_text": preview_row["header"],
+                    "middle_text": preview_row["name"],
+                    "bottom_text": "",
+                    "top_logo_path": _organization_logo_path(preview_row["type"]),
+                }
                 create_tag(
                     template_path,
                     output_path=output_path,
                     font_path=font_path,
-                    **PREVIEW_CASES[preview_case],
+                    **preview_kwargs,
                     **settings.create_tag_kwargs(),
                 )
                 content = output_path.read_bytes()
@@ -192,9 +200,10 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                     output_path = generated_dir / f"generated_tag_{index:0{filename_width}d}.png"
                     row_kwargs = settings.create_tag_kwargs()
                     row_kwargs.update(
-                        top_text=row["top"],
-                        middle_text=row["middle"],
-                        bottom_text=row["bottom"],
+                        top_text=row["header"],
+                        middle_text=row["name"],
+                        bottom_text="",
+                        top_logo_path=_organization_logo_path(row["type"]),
                     )
                     try:
                         create_tag(
@@ -220,10 +229,25 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 def _requested_image_names(rows: list[dict[str, str]]) -> list[str]:
     requested: dict[str, str] = {}
     for row in rows:
-        filename = image_filename_from_text(row["top"])
+        filename = image_filename_from_text(row["header"]) if row["type"] == "industry" else None
         if filename is not None:
             requested.setdefault(filename.casefold(), filename)
     return list(requested.values())
+
+
+def _organization_logo_path(row_type: str) -> Path | None:
+    logo_name = {
+        "uones": "UONES.png",
+        "nuches": "NUChES.png",
+        "ausimm": "AusIMM.png",
+        "nuwie": "NUWIE.png",
+    }.get(row_type)
+    if logo_name is None:
+        return None
+    logo_path = LOGOS_DIR / logo_name
+    if not logo_path.is_file():
+        raise FileNotFoundError(f"Organization logo not found: {logo_path}")
+    return logo_path
 
 
 def _save_requested_top_images(

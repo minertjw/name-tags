@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
 
+from .footer_logos import load_trimmed_logo
 from .fonts import load_font
 from .render_config import FontLike, MIN_FONT_SIZE, TextBoxSpec, TextRegion
 
@@ -175,6 +176,52 @@ def draw_text_block(
     )
 
 
+def draw_text_block_with_logo(
+    image: Image.Image,
+    region: TextRegion,
+    logo_path: Path,
+    text_color: str,
+    shadow_color: str,
+    shadow_offset: tuple[int, int],
+    line_spacing: int,
+) -> None:
+    draw = ImageDraw.Draw(image)
+    text = "\n".join(region.lines)
+    left, top, right, bottom = text_block_bounds(
+        draw, region.lines, region.font, line_spacing
+    )
+    text_width = right - left
+    text_height = bottom - top
+    logo = load_trimmed_logo(logo_path)
+    logo.thumbnail(
+        (max(1, region.width // 3), max(1, int(region.height * 0.8))),
+        Image.Resampling.LANCZOS,
+    )
+    gap = max(1, region.width // 40)
+    group_width = logo.width + gap + text_width + abs(shadow_offset[0])
+    group_left = int(round(region.left + (region.width - group_width) / 2))
+    logo_top = int(round(region.top + (region.height - logo.height) / 2))
+    image.alpha_composite(logo, (group_left, logo_top))
+    text_left = group_left + logo.width + gap
+    text_top = region.top + (region.height - text_height) // 2 - top
+    draw.multiline_text(
+        (text_left + shadow_offset[0], text_top + shadow_offset[1]),
+        text,
+        fill=shadow_color,
+        font=region.font,
+        spacing=line_spacing,
+        align="center",
+    )
+    draw.multiline_text(
+        (text_left, text_top),
+        text,
+        fill=text_color,
+        font=region.font,
+        spacing=line_spacing,
+        align="center",
+    )
+
+
 def build_text_regions(
     draw: ImageDraw.ImageDraw,
     image_size: tuple[int, int],
@@ -186,6 +233,7 @@ def build_text_regions(
     shadow_offset: tuple[int, int],
     text_boxes: tuple[TextBoxSpec, ...],
     middle_max_font_size: int,
+    top_logo_path: Path | None = None,
 ) -> list[TextRegion]:
     image_width, image_height = image_size
     text_values = {
@@ -205,6 +253,13 @@ def build_text_regions(
         box_width = max(1, int(round(image_width * width_ratio)))
         box_height = max(1, int(round(image_height * height_ratio)))
         text_width = max(1, box_width - abs(shadow_offset[0]))
+        if name == "top" and top_logo_path is not None:
+            logo = load_trimmed_logo(top_logo_path)
+            logo.thumbnail(
+                (max(1, box_width // 3), max(1, int(box_height * 0.8))),
+                Image.Resampling.LANCZOS,
+            )
+            text_width = max(1, text_width - logo.width - max(1, box_width // 40))
         text_height = max(1, box_height - abs(shadow_offset[1]))
         region_font, lines = fit_text_region(
             draw,
@@ -217,6 +272,7 @@ def build_text_regions(
         )
         regions.append(
             TextRegion(
+                name=name,
                 left=box_left,
                 top=box_top,
                 width=box_width,
