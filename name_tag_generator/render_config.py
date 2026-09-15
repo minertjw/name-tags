@@ -13,7 +13,7 @@ DEFAULT_MARGIN_CM = 1.0
 DEFAULT_DPI = 300
 DEFAULT_LINE_SPACING = 12
 MIN_FONT_SIZE = 12
-DEFAULT_MIDDLE_MAX_FONT_SIZE = 120
+DEFAULT_MIDDLE_MAX_FONT_SIZE = 180
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff"}
 DEFAULT_FONT_PATHS = (
     BASE_DIR / "assets" / "norwester.otf",

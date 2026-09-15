@@ -29,6 +29,7 @@ def create_tag(
 	middle_text: str = "",
 	bottom_text: str = "",
 	top_logo_path: str | Path | None = None,
+	realm_type: str | None = None,
 	font_path: str | Path | None = None,
 	text_color: str = DEFAULT_TEXT_COLOR,
 	shadow_angle: float = DEFAULT_SHADOW_ANGLE,
@@ -41,7 +42,7 @@ def create_tag(
 	realm_colors: Mapping[str, str] = REALM_COLORS,
 ) -> Path:
 	top_image_path = resolve_image_filename(top_text, top_images)
-	resolved_realm_color = realm_color(top_text, bottom_text, realm_colors)
+	resolved_realm_color = realm_color(top_text, bottom_text, realm_colors, realm_type)
 	top_text = "" if top_image_path is not None else normalize_text(top_text)
 	middle_text = normalize_text(middle_text)
 	bottom_text = normalize_text(bottom_text)

@@ -17,6 +17,18 @@ REALM_COLORS = {
     "mechanical": "#2a6cce",
     "other": "#28C2B5",
     "industry": "#FFD700",
+    "uones": "#D62828",
+    "nuches": "#2E8B57",
+    "nuwie": "#7B2CBF",
+    "ausimm": "#1666B1",
+}
+
+REALM_TYPES = {
+    "uones": "uones",
+    "nuches": "nuches",
+    "nuwie": "nuwie",
+    "ausimm": "ausimm",
+    "industry": "industry",
 }
 
 _REALM_KEYWORDS = (
@@ -28,7 +40,13 @@ _REALM_KEYWORDS = (
 )
 
 
-def classify_realm(top_text: str, bottom_text: str) -> str:
+def classify_realm(
+    top_text: str,
+    bottom_text: str,
+    realm_type: str | None = None,
+) -> str:
+    if realm_type in REALM_TYPES:
+        return REALM_TYPES[realm_type]
     if image_filename_from_text(top_text) is not None:
         return "industry"
 
@@ -70,5 +88,6 @@ def realm_color(
     top_text: str,
     bottom_text: str,
     colors: Mapping[str, str] = REALM_COLORS,
+    realm_type: str | None = None,
 ) -> str:
-    return colors[classify_realm(top_text, bottom_text)]
+    return colors[classify_realm(top_text, bottom_text, realm_type)]

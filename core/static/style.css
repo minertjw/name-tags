@@ -64,7 +64,6 @@ input[type="file"]::file-selector-button { margin-right: 10px; border: 0; border
 .box-overlay[hidden] { display: none; }
 .text-box { position: absolute; border: 1px solid rgba(255, 77, 85, 0.95); background: rgba(199, 25, 32, 0.08); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55); cursor: move; pointer-events: auto; }
 .text-box:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
-.text-box-label { position: absolute; top: 3px; left: 5px; color: #ffffff; background: rgba(5, 5, 6, 0.82); padding: 2px 4px; font: 700 0.58rem "Courier New", monospace; text-transform: uppercase; pointer-events: none; }
 .resize-handle { position: absolute; width: 10px; height: 10px; border: 1px solid #09090a; background: var(--accent-bright); pointer-events: auto; }
 .handle-n { top: -5px; left: calc(50% - 5px); cursor: ns-resize; }
 .handle-ne { top: -5px; right: -5px; cursor: nesw-resize; }

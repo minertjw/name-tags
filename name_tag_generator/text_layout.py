@@ -194,7 +194,7 @@ def draw_text_block_with_logo(
     text_height = bottom - top
     logo = load_trimmed_logo(logo_path)
     logo.thumbnail(
-        (max(1, region.width // 3), max(1, int(region.height * 0.8))),
+        (max(1, region.width // 3), max(1, int(region.height * 1.2))),
         Image.Resampling.LANCZOS,
     )
     gap = max(1, region.width // 40)

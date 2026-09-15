@@ -69,8 +69,12 @@
                 ('software', 'Software'),
                 ('mechanical', 'Mechanical / Mechatronics / Aerospace'),
                 ('other', 'Other'),
-                ('industry', 'Industry')
-              ] %}
+                ('industry', 'Industry'),
+                  ('uones', 'UONES'),
+                  ('nuches', 'NUChES'),
+                  ('nuwie', 'NUWIE'),
+                  ('ausimm', 'AusIMM')
+                ] %}
               <label class="realm-color">
                 <input name="realm_color_{{ realm }}" type="color" value="{{ defaults.realm_colors[realm] }}">
                 <span>{{ label }}</span>
@@ -125,7 +129,6 @@
                 <div class="box-overlay" aria-label="Resizable text areas" hidden>
                   {% for box in text_boxes %}
                   <div class="text-box text-box-{{ box.name }}" data-box-name="{{ box.name }}" tabindex="0" role="group" aria-label="{{ box.name | title }} text area. Drag vertically to move; use handles to resize.">
-                    <span class="text-box-label">{{ box.name }}</span>
                     {% for handle in ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] %}
                     <span class="resize-handle handle-{{ handle }}" data-handle="{{ handle }}" aria-hidden="true"></span>
                     {% endfor %}
@@ -145,7 +148,6 @@
                 <div class="box-overlay" aria-label="Resizable text areas" hidden>
                   {% for box in text_boxes %}
                   <div class="text-box text-box-{{ box.name }}" data-box-name="{{ box.name }}" tabindex="0" role="group" aria-label="{{ box.name | title }} text area. Drag vertically to move; use handles to resize.">
-                    <span class="text-box-label">{{ box.name }}</span>
                     {% for handle in ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] %}
                     <span class="resize-handle handle-{{ handle }}" data-handle="{{ handle }}"></span>
                     {% endfor %}

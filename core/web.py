@@ -161,6 +161,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                     "middle_text": preview_row["name"],
                     "bottom_text": "",
                     "top_logo_path": _organization_logo_path(preview_row["type"]),
+                    "realm_type": preview_row["type"],
                 }
                 create_tag(
                     template_path,
@@ -204,6 +205,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                         middle_text=row["name"],
                         bottom_text="",
                         top_logo_path=_organization_logo_path(row["type"]),
+                        realm_type=row["type"],
                     )
                     try:
                         create_tag(
