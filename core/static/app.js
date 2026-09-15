@@ -25,6 +25,16 @@ let requestedImagesAreComplete = true;
 const minimumBoxSize = 0.03;
 
 updateBoxOverlays();
+document.querySelectorAll(".box-overlay").forEach((overlay) => {
+  overlay.hidden = false;
+});
+document.querySelectorAll(".preview-empty").forEach((empty) => {
+  empty.hidden = true;
+});
+document.querySelectorAll(".preview-stage").forEach((stage) => {
+  stage.style.aspectRatio = "1900 / 1200";
+});
+schedulePreview();
 
 document.querySelectorAll(".text-box").forEach((element) => {
   element.addEventListener("pointerdown", beginBoxInteraction);
@@ -157,7 +167,7 @@ function clamp(value, minimum, maximum) {
 
 function schedulePreview() {
   window.clearTimeout(previewTimer);
-  if (!templateInput.files.length || !generatorForm.reportValidity()) return;
+  if (!generatorForm.reportValidity()) return;
   previewState.textContent = "Changes pending";
   previewTimer = window.setTimeout(renderPreview, 500);
 }
@@ -286,7 +296,7 @@ function updateRequestedImages() {
 }
 
 function updateGenerateTagsButton() {
-  generateTagsButton.disabled = !(csvIsValid && templateInput.files.length && requestedImagesAreComplete);
+  generateTagsButton.disabled = !(csvIsValid && requestedImagesAreComplete);
 }
 
 generateTagsButton.addEventListener("click", async () => {

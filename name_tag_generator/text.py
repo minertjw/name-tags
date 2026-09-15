@@ -3,6 +3,7 @@ from typing import Mapping
 
 from PIL import Image, ImageDraw
 
+from .footer_logos import draw_footer_logos
 from .normalization import cm_to_pixels, normalize_text, shadow_offset_from_angle
 from .realms import REALM_COLORS, apply_realm_hue, realm_color
 from .render_config import (
@@ -99,6 +100,7 @@ def create_tag(
 			shadow_offset,
 			line_spacing,
 		)
+	draw_footer_logos(image)
 
 	output.parent.mkdir(parents=True, exist_ok=True)
 	image.save(output)

@@ -38,7 +38,7 @@ FALLBACK_FONT_NAMES = (
 TEXT_BOX_SPECS = (
     ("top", 0.15, 0.08, 0.70, 0.12),
     ("middle", 0.06, 0.32, 0.88, 0.30),
-    ("bottom", 0.14, 0.75, 0.78, 0.18),
+    ("bottom", 0.14, 0.75, 0.78, 0.10),
 )
 TextBoxSpec = tuple[str, float, float, float, float]
 FontLike = ImageFont.ImageFont | ImageFont.FreeTypeFont

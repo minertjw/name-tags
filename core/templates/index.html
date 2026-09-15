@@ -23,11 +23,11 @@
           <section class="control-section">
             <div class="section-heading">
               <div><span class="step">01</span><h2>Source</h2></div>
-              <p id="template-name">No template selected</p>
+              <p id="template-name">Default template</p>
             </div>
             <label class="file-control">
               <span>Template image</span>
-              <input id="template" name="template" type="file" accept=".png,.jpg,.jpeg,.bmp,.gif" required>
+              <input id="template" name="template" type="file" accept=".png,.jpg,.jpeg,.bmp,.gif">
             </label>
             <div class="field-row">
               <label>Typeface
@@ -120,7 +120,7 @@
               <div class="preview-stage">
                 <img id="preview-long-image" alt="Template preview with a long name and double degree" hidden>
                 <div class="empty-state preview-empty">
-                  <strong>Select a template</strong>
+                  <strong>Default template</strong>
                 </div>
                 <div class="box-overlay" aria-label="Resizable text areas" hidden>
                   {% for box in text_boxes %}
@@ -140,7 +140,7 @@
               <div class="preview-stage">
                 <img id="preview-short-image" alt="Template preview with a short name and degree" hidden>
                 <div class="empty-state preview-empty">
-                  <strong>Select a template</strong>
+                  <strong>Default template</strong>
                 </div>
                 <div class="box-overlay" aria-label="Resizable text areas" hidden>
                   {% for box in text_boxes %}

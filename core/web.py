@@ -22,6 +22,7 @@ from name_tag_combiner.pdf import generate_combined_pdf
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_TEMPLATE_PATH = BASE_DIR / "assets" / "blank-template.png"
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
@@ -111,6 +112,10 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
             BASE_DIR / "assets" / "header_animation.gif", mimetype="image/gif"
         )
 
+    @app.get("/blank-template.png")
+    def blank_template():
+        return send_file(DEFAULT_TEMPLATE_PATH, mimetype="image/png")
+
     @app.get("/norwester.otf")
     def bundled_font():
         return send_file(BASE_DIR / "assets" / "norwester.otf", mimetype="font/otf")
@@ -144,7 +149,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                 raise ValueError("Preview case must be long or short.")
             with tempfile.TemporaryDirectory(prefix="name-tags-preview-") as temp_dir:
                 work_dir = Path(temp_dir)
-                template_path = _save_image_upload(
+                template_path = _resolve_template_upload(
                     request.files.get("template"), work_dir, "template"
                 )
                 font_path = _resolve_font_upload(request, work_dir)
@@ -169,7 +174,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
             rows = _read_csv_upload(request.files.get("csv"))
             with tempfile.TemporaryDirectory(prefix="name-tags-batch-") as temp_dir:
                 work_dir = Path(temp_dir)
-                template_path = _save_image_upload(
+                template_path = _resolve_template_upload(
                     request.files.get("template"), work_dir, "template"
                 )
                 font_path = _resolve_font_upload(request, work_dir)
@@ -286,6 +291,14 @@ def _save_image_upload(
     except Image.DecompressionBombError as exc:
         raise ValueError("The image dimensions are too large.") from exc
     return output_path
+
+
+def _resolve_template_upload(upload, directory: Path, stem: str) -> Path:
+    if upload is None or not upload.filename:
+        if not DEFAULT_TEMPLATE_PATH.is_file():
+            raise FileNotFoundError(f"Default template image not found: {DEFAULT_TEMPLATE_PATH}")
+        return DEFAULT_TEMPLATE_PATH
+    return _save_image_upload(upload, directory, stem)
 
 
 def _resolve_font_upload(request, directory: Path) -> str | None:
