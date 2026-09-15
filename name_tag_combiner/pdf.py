@@ -20,6 +20,7 @@ usable_width = page_width - 2 * MARGIN_CM * cm
 usable_height = page_height - 2 * MARGIN_CM * cm
 x_spacing = (usable_width - COLUMNS * IMAGE_WIDTH_CM * cm) / (COLUMNS - 1)
 image_width_px = IMAGE_WIDTH_CM * cm
+BORDER_WIDTH_PT = 0.75
 
 LogFn = Callable[[str], None]
 
@@ -43,6 +44,9 @@ def draw_image(c: canvas.Canvas, img_path: Path, x: float, y: float) -> None:
                 height=img_height_px,
                 preserveAspectRatio=True,
             )
+            c.setStrokeColorRGB(0, 0, 0)
+            c.setLineWidth(BORDER_WIDTH_PT)
+            c.rect(x, y, image_width_px, img_height_px, stroke=1, fill=0)
     except Exception as exc:
         raise RuntimeError(f"Failed to draw {img_path}: {exc}") from exc
 
