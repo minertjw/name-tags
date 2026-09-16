@@ -107,10 +107,12 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
     def favicon():
         return send_file(BASE_DIR / "assets" / "app_icon.png", mimetype="image/png")
 
-    @app.get("/header-animation.gif")
+    @app.get("/header-animation.svg")
     def header_animation():
         return send_file(
-            BASE_DIR / "assets" / "header_animation.gif", mimetype="image/gif"
+            BASE_DIR / "assets" / "header_animation.svg",
+            mimetype="image/svg+xml",
+            max_age=0,
         )
 
     @app.get("/blank-template.png")

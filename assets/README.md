@@ -1,7 +1,7 @@
 Place the application icon file here.
 
 Optional header animation:
-- header_animation.gif
+- header_animation.svg
 - This appears at the top-left of the app header.
 
 Expected filename:
