@@ -59,7 +59,14 @@ def draw_top_image(
         overlay = source_image.convert("RGBA")
 
     if overlay.width > 0 and overlay.height > 0:
-        overlay.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+        scale = min(max_width / overlay.width, max_height / overlay.height)
+        overlay = overlay.resize(
+            (
+                max(1, round(overlay.width * scale)),
+                max(1, round(overlay.height * scale)),
+            ),
+            Image.Resampling.LANCZOS,
+        )
 
     left = box_left + int(round((max_width - overlay.width) / 2))
     image.alpha_composite(overlay, (left, box_top))
