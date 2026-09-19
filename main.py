@@ -12,8 +12,9 @@ def main():
 
     host = "127.0.0.1"
     port = int(os.environ.get("NAME_TAGS_PORT", "5000"))
-    app = create_app()
     url = f"http://{host}:{port}/"
+    
+    app = create_app()
 
     try:
         server = make_server(host, port, app, threaded=True)
@@ -22,8 +23,8 @@ def main():
     
     logger.debug(f"Name Tag Server is running at {url}")
 
-    webview.create_window("Test", url=url, zoomable=True)
-    webview.start(server.serve_forever, gui="edgechromium")
+    webview.create_window("Test", url=url, zoomable=True, easy_drag=False)
+    webview.start(server.serve_forever, ssl=True, gui="edgechromium")
 
     server.shutdown()
 
