@@ -11,15 +11,15 @@ from PIL import Image, ImageFont, UnidentifiedImageError
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
-from name_tag_generator.fonts import get_font_options
-from name_tag_generator.footer_logos import LOGOS_DIR
-from name_tag_generator.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
-from name_tag_generator.settings import get_default_preview_settings, parse_render_settings
-from name_tag_generator.text import create_tag
-from name_tag_generator.top_image import image_filename_from_text
+from tag.fonts import get_font_options
+from tag.footer_logos import LOGOS_DIR
+from tag.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
+from tag.settings import get_default_preview_settings, parse_render_settings
+from tag.text import create_tag
+from tag.top_image import image_filename_from_text
 
-from name_tag_combiner.generator_csv import read_generator_csv_stream
-from name_tag_combiner.pdf import generate_combined_pdf
+from pdf.generator_csv import read_generator_csv_stream
+from pdf.pdf import generate_combined_pdf
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent

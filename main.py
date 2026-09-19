@@ -4,7 +4,7 @@ import logging
 
 from werkzeug.serving import make_server
 
-from core.web import create_app
+from web.app import create_app
 
 def main():
     logging.basicConfig(level=logging.WARN)
