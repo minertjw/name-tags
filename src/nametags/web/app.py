@@ -11,15 +11,15 @@ from PIL import Image, ImageFont, UnidentifiedImageError
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
-from tag.fonts import get_font_options
-from tag.footer_logos import LOGOS_DIR
-from tag.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
-from tag.settings import get_default_preview_settings, parse_render_settings
-from tag.text import create_tag
-from tag.top_image import image_filename_from_text
+from nametags.tag.fonts import get_font_options
+from nametags.tag.footer_logos import SOCIETY_LOGO_DIR
+from nametags.tag.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
+from nametags.tag.settings import get_default_preview_settings, parse_render_settings
+from nametags.tag.text import create_tag
+from nametags.tag.top_image import image_filename_from_text
 
-from pdf.generator_csv import read_generator_csv_stream
-from pdf.pdf import generate_combined_pdf
+from nametags.pdf.generator_csv import read_generator_csv_stream
+from nametags.pdf.pdf import generate_pdf
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +42,7 @@ PREVIEW_CASES: dict[str, PreviewRow] = {
     "long": {
         "type": "uones",
         "name": "ALEXANDRIA MONTGOMERY-WILLIAMS",
-        "header": "Conference President",
+        "header": "President",
     },
     "short": {
         "type": "student",
@@ -105,7 +105,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 
     @app.get("/favicon.png")
     def favicon():
-        return send_file(BASE_DIR / "assets" / "app_icon.png", mimetype="image/png")
+        return send_file(BASE_DIR / "assets" / "icons" / "app_icon.png", mimetype="image/png")
 
     @app.get("/header-animation.svg")
     def header_animation():
@@ -121,7 +121,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 
     @app.get("/norwester.otf")
     def bundled_font():
-        return send_file(BASE_DIR / "assets" / "norwester.otf", mimetype="font/otf")
+        return send_file(BASE_DIR / "assets" / "fonts" / "norwester.otf", mimetype="font/otf")
 
     @app.post("/api/csv/preview")
     def csv_preview():
@@ -220,7 +220,7 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                     except (OSError, ValueError) as exc:
                         raise ValueError(f"Could not render CSV row {index}: {exc}") from exc
 
-                generate_combined_pdf(str(generated_dir), str(output_dir), lambda _message: None)
+                generate_pdf(str(generated_dir), str(output_dir))
                 content = (output_dir / "output_combined.pdf").read_bytes()
         except (OSError, UnicodeDecodeError, UnidentifiedImageError, ValueError) as exc:
             return jsonify(error=str(exc)), 400
@@ -248,7 +248,7 @@ def _organization_logo_path(row_type: str) -> Path | None:
     }.get(row_type)
     if logo_name is None:
         return None
-    logo_path = LOGOS_DIR / logo_name
+    logo_path = SOCIETY_LOGO_DIR / logo_name
     if not logo_path.is_file():
         raise FileNotFoundError(f"Organization logo not found: {logo_path}")
     return logo_path

@@ -2,9 +2,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from .footer_logos import load_trimmed_logo
-from .fonts import load_font
-from .render_config import FontLike, MIN_FONT_SIZE, TextBoxSpec, TextRegion
+from nametags.tag.footer_logos import load_trimmed_logo
+from nametags.tag.fonts import load_font
+from nametags.tag.render_config import FontLike, MIN_FONT_SIZE, TextBoxSpec, TextRegion
 
 
 def measure_text(draw: ImageDraw.ImageDraw, text: str, font: FontLike) -> tuple[int, int]:

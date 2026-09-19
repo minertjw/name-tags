@@ -3,8 +3,8 @@ from typing import Mapping
 
 from PIL import Image
 
-from .normalization import strip_wrapping_quotes
-from .render_config import (
+from nametags.tag.normalization import strip_wrapping_quotes
+from nametags.tag.render_config import (
     IMAGE_SUFFIXES,
     IMAGES_DIR,
     TextBoxSpec,

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import ImageFont
 
-from .render_config import DEFAULT_FONT_PATHS, FALLBACK_FONT_NAMES, FontLike
+from nametags.tag.render_config import DEFAULT_FONT_PATHS, FALLBACK_FONT_NAMES, FontLike
 
 
 FONT_LABELS = {

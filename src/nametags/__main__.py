@@ -4,11 +4,11 @@ import logging
 
 from werkzeug.serving import make_server
 
-from web.app import create_app
+from nametags.web.app import create_app
 
 def main():
     logging.basicConfig(level=logging.WARN)
-    logger = logging.getLogger("name-tags")
+    logger = logging.getLogger("nametags")
 
     host = "127.0.0.1"
     port = int(os.environ.get("NAME_TAGS_PORT", "5000"))

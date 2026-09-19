@@ -10,7 +10,7 @@ Use Terminal on Linux or macOS, or PowerShell on Windows.
 From the project directory, create a virtual environment with a recognisable shell prompt:
 
 ```bash
-python -m venv .venv --prompt name-tags
+python -m venv .venv --prompt nametags
 ```
 
 Activate it on Linux or macOS:

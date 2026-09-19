@@ -6,7 +6,7 @@ from collections.abc import Mapping
 
 from PIL import Image
 
-from .top_image import image_filename_from_text
+from nametags.tag.top_image import image_filename_from_text
 
 
 REALM_COLORS = {

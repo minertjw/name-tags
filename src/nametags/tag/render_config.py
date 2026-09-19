@@ -16,10 +16,10 @@ MIN_FONT_SIZE = 12
 DEFAULT_MIDDLE_MAX_FONT_SIZE = 180
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff"}
 DEFAULT_FONT_PATHS = (
-    BASE_DIR / "assets" / "norwester.otf",
-    BASE_DIR / "assets" / "norwester.ttf",
-    BASE_DIR / "assets" / "Norwester.otf",
-    BASE_DIR / "assets" / "Norwester.ttf",
+    BASE_DIR / "assets" / "fonts" / "norwester.otf",
+    BASE_DIR / "assets" / "fonts" / "norwester.ttf",
+    BASE_DIR / "assets" / "fonts" / "Norwester.otf",
+    BASE_DIR / "assets" / "fonts" / "Norwester.ttf",
 )
 FALLBACK_FONT_NAMES = (
     "Norwester",

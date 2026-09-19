@@ -3,8 +3,8 @@ import json
 import re
 from typing import Mapping
 
-from .realms import REALM_COLORS
-from .render_config import DEFAULT_MIDDLE_MAX_FONT_SIZE, TEXT_BOX_SPECS, TextBoxSpec
+from nametags.tag.realms import REALM_COLORS
+from nametags.tag.render_config import DEFAULT_MIDDLE_MAX_FONT_SIZE, TEXT_BOX_SPECS, TextBoxSpec
 
 MIN_BOX_SIZE = 0.03
 

@@ -3,8 +3,8 @@ from pathlib import Path
 from PIL import Image, ImageChops
 
 
-LOGOS_DIR = Path(__file__).resolve().parent.parent / "assets" / "logos"
-LOGO_FILENAMES = ("UONES.png", "NUWIE.png", "AusIMM.png", "NUChES.png", )
+SOCIETY_LOGO_DIR = Path(__file__).resolve().parent.parent / "assets" / "societies"
+SOCIETY_LOGO_FILENAMES = ("UONES.png", "NUWIE.png", "AusIMM.png", "NUChES.png", )
 FOOTER_HEIGHT_RATIO = 0.25
 FOOTER_SIDE_MARGIN_RATIO = 0.025
 FOOTER_GAP_RATIO = 0.015
@@ -20,7 +20,7 @@ FOOTER_LOGO_OFFSETS = {
 
 
 def draw_footer_logos(image: Image.Image) -> None:
-    logo_paths = [LOGOS_DIR / filename for filename in LOGO_FILENAMES]
+    logo_paths = [SOCIETY_LOGO_DIR / filename for filename in SOCIETY_LOGO_FILENAMES]
     missing = [path.name for path in logo_paths if not path.is_file()]
     if missing:
         raise FileNotFoundError(f"Footer logo not found: {', '.join(missing)}")
