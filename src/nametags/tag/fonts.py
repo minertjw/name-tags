@@ -2,35 +2,34 @@ from pathlib import Path
 
 from PIL import ImageFont
 
-from nametags.tag.render_config import DEFAULT_FONT_PATHS, FALLBACK_FONT_NAMES, FontLike
+from nametags.__main__ import BASE_DIR
 
-FONT_LABELS = {
-    "Norwester": "Norwester",
-    "norwester": "Norwester",
-    "Norwester.otf": "Norwester",
-    "Norwester.ttf": "Norwester",
-    "norwester.otf": "Norwester",
-    "norwester.ttf": "Norwester",
+BUNDLED_FONT_DIR = BASE_DIR / "assets" / "fonts"
+
+SYSTEM_FONTS = {
     "arial.ttf": "Arial",
     "segoeui.ttf": "Segoe UI",
     "calibri.ttf": "Calibri",
     "DejaVuSans.ttf": "DejaVu Sans",
 }
 
+FontLike = ImageFont.ImageFont | ImageFont.FreeTypeFont
 
-def _is_font_loadable(font_source: str | Path) -> bool:
+
+def _is_font_loadable(font_source: str) -> bool:
     try:
-        ImageFont.truetype(str(font_source), size=12)
+        ImageFont.truetype(font_source)
     except OSError:
         return False
     return True
 
 
 def get_font_options() -> list[tuple[str, str]]:
-    options: list[tuple[str, str]] = [("Default (Norwester fallback)", "")]
+    options: list[tuple[str, str]] = []
     seen_values = {""}
 
-    for font_path in DEFAULT_FONT_PATHS:
+    # Bundled fonts
+    for font_path in BUNDLED_FONT_DIR.iterdir():
         if not font_path.is_file():
             continue
 
@@ -38,14 +37,16 @@ def get_font_options() -> list[tuple[str, str]]:
         if value in seen_values or not _is_font_loadable(value):
             continue
 
-        options.append((font_path.stem, value))
+        options.append((font_path.stem.capitalize(), value))
         seen_values.add(value)
 
-    for font_name in FALLBACK_FONT_NAMES:
+    # System fonts
+    for font_tuple in SYSTEM_FONTS.items():
+        font_name = font_tuple[0]
         if font_name in seen_values or not _is_font_loadable(font_name):
             continue
 
-        options.append((FONT_LABELS.get(font_name, font_name), font_name))
+        options.append((SYSTEM_FONTS[font_name], font_name))
         seen_values.add(font_name)
 
     return options
@@ -56,15 +57,5 @@ def load_font(font_path: str | Path | None, size: int) -> FontLike:
         normalized_font_path = str(font_path).strip()
         if normalized_font_path:
             return ImageFont.truetype(normalized_font_path, size=size)
-
-    for default_font_path in DEFAULT_FONT_PATHS:
-        if default_font_path.is_file():
-            return ImageFont.truetype(str(default_font_path), size=size)
-
-    for font_name in FALLBACK_FONT_NAMES:
-        try:
-            return ImageFont.truetype(font_name, size=size)
-        except OSError:
-            continue
 
     return ImageFont.load_default()

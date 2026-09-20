@@ -2,9 +2,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from nametags.tag.fonts import load_font
+from nametags.tag.fonts import FontLike, load_font
 from nametags.tag.footer_logos import load_trimmed_logo
-from nametags.tag.render_config import MIN_FONT_SIZE, FontLike, TextBoxSpec, TextRegion
+from nametags.tag.render_config import MIN_FONT_SIZE, TextBoxSpec, TextRegion
 
 
 def measure_text(
