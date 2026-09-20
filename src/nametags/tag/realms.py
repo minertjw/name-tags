@@ -8,7 +8,6 @@ from PIL import Image
 
 from nametags.tag.top_image import image_filename_from_text
 
-
 REALM_COLORS = {
     "civil": "#751fbb",
     "computer": "#c99525",
