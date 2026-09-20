@@ -24,12 +24,12 @@ def normalize_text(text: str) -> str:
 
 
 def cm_to_pixels(cm_value: float, dpi: float) -> int:
-    return max(0, int(round((cm_value / 2.54) * dpi)))
+    return max(0, (round((cm_value / 2.54) * dpi)))
 
 
 def shadow_offset_from_angle(angle_degrees: float, distance: float) -> tuple[int, int]:
     radians = math.radians(angle_degrees)
     return (
-        int(round(math.cos(radians) * distance)),
-        int(round(math.sin(radians) * distance)),
+        (round(math.cos(radians) * distance)),
+        (round(math.sin(radians) * distance)),
     )

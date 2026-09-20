@@ -11,16 +11,19 @@ from PIL import Image, ImageFont, UnidentifiedImageError
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
+from nametags.pdf.generator_csv import read_generator_csv_stream
+from nametags.pdf.pdf import generate_pdf
 from nametags.tag.fonts import get_font_options
 from nametags.tag.footer_logos import SOCIETY_LOGO_DIR
-from nametags.tag.render_config import IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES, TEXT_BOX_SPECS
+from nametags.tag.render_config import (
+    IMAGE_SUFFIXES as TOP_IMAGE_SUFFIXES,
+)
+from nametags.tag.render_config import (
+    TEXT_BOX_SPECS,
+)
 from nametags.tag.settings import get_default_preview_settings, parse_render_settings
 from nametags.tag.text import create_tag
 from nametags.tag.top_image import image_filename_from_text
-
-from nametags.pdf.generator_csv import read_generator_csv_stream
-from nametags.pdf.pdf import generate_pdf
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_TEMPLATE_PATH = BASE_DIR / "assets" / "blank-template.png"
@@ -66,10 +69,14 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
         origin = request.headers.get("Origin")
         if request.method != "GET" and origin:
             if not isinstance(origin, str):
-                return jsonify(error="Requests must originate from the local application."), 403
+                return jsonify(
+                    error="Requests must originate from the local application."
+                ), 403
             origin_host = (urlparse(origin).hostname or "").lower()
             if origin_host not in {"127.0.0.1", "localhost", "::1"}:
-                return jsonify(error="Requests must originate from the local application."), 403
+                return jsonify(
+                    error="Requests must originate from the local application."
+                ), 403
 
     @app.after_request
     def add_response_headers(response):
@@ -105,7 +112,9 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 
     @app.get("/favicon.png")
     def favicon():
-        return send_file(BASE_DIR / "assets" / "icons" / "app_icon.png", mimetype="image/png")
+        return send_file(
+            BASE_DIR / "assets" / "icons" / "app_icon.png", mimetype="image/png"
+        )
 
     @app.get("/header-animation.svg")
     def header_animation():
@@ -121,7 +130,9 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 
     @app.get("/norwester.otf")
     def bundled_font():
-        return send_file(BASE_DIR / "assets" / "fonts" / "norwester.otf", mimetype="font/otf")
+        return send_file(
+            BASE_DIR / "assets" / "fonts" / "norwester.otf", mimetype="font/otf"
+        )
 
     @app.post("/api/csv/preview")
     def csv_preview():
@@ -132,7 +143,9 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
             return jsonify(error="The selected file must be a CSV."), 400
 
         try:
-            text_stream = io.TextIOWrapper(upload.stream, encoding="utf-8-sig", newline="")
+            text_stream = io.TextIOWrapper(
+                upload.stream, encoding="utf-8-sig", newline=""
+            )
             rows = read_generator_csv_stream(text_stream)
         except (UnicodeDecodeError, ValueError) as exc:
             return jsonify(error=str(exc)), 400
@@ -200,7 +213,9 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                 output_dir.mkdir()
                 filename_width = max(2, len(str(len(rows))))
                 for index, row in enumerate(rows, start=1):
-                    output_path = generated_dir / f"generated_tag_{index:0{filename_width}d}.png"
+                    output_path = (
+                        generated_dir / f"generated_tag_{index:0{filename_width}d}.png"
+                    )
                     row_kwargs = settings.create_tag_kwargs()
                     row_kwargs.update(
                         top_text=row["header"],
@@ -218,7 +233,9 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                             **row_kwargs,
                         )
                     except (OSError, ValueError) as exc:
-                        raise ValueError(f"Could not render CSV row {index}: {exc}") from exc
+                        raise ValueError(
+                            f"Could not render CSV row {index}: {exc}"
+                        ) from exc
 
                 generate_pdf(str(generated_dir), str(output_dir))
                 content = (output_dir / "output_combined.pdf").read_bytes()
@@ -233,7 +250,11 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 def _requested_image_names(rows: list[dict[str, str]]) -> list[str]:
     requested: dict[str, str] = {}
     for row in rows:
-        filename = image_filename_from_text(row["header"]) if row["type"] == "industry" else None
+        filename = (
+            image_filename_from_text(row["header"])
+            if row["type"] == "industry"
+            else None
+        )
         if filename is not None:
             requested.setdefault(filename.casefold(), filename)
     return list(requested.values())
@@ -260,7 +281,9 @@ def _save_requested_top_images(
     directory: Path,
 ) -> dict[str, Path]:
     if len(requested_names) > MAX_TOP_IMAGES:
-        raise ValueError(f"CSV files may request no more than {MAX_TOP_IMAGES} unique images.")
+        raise ValueError(
+            f"CSV files may request no more than {MAX_TOP_IMAGES} unique images."
+        )
 
     requested = {name.casefold(): name for name in requested_names}
     provided: dict[str, Path] = {}
@@ -270,7 +293,9 @@ def _save_requested_top_images(
         filename = Path(upload.filename or "").name
         key = filename.casefold()
         if key not in requested:
-            raise ValueError(f"Image {filename or '(unnamed)'} is not requested by the CSV.")
+            raise ValueError(
+                f"Image {filename or '(unnamed)'} is not requested by the CSV."
+            )
         if key in provided:
             raise ValueError(f"Image {requested[key]} was provided more than once.")
         provided[key] = _save_image_upload(
@@ -282,7 +307,9 @@ def _save_requested_top_images(
 
     missing = [name for key, name in requested.items() if key not in provided]
     if missing:
-        raise ValueError(f"Provide the images requested by the CSV: {', '.join(missing)}")
+        raise ValueError(
+            f"Provide the images requested by the CSV: {', '.join(missing)}"
+        )
     return provided
 
 
@@ -324,7 +351,9 @@ def _save_image_upload(
 def _resolve_template_upload(upload, directory: Path, stem: str) -> Path:
     if upload is None or not upload.filename:
         if not DEFAULT_TEMPLATE_PATH.is_file():
-            raise FileNotFoundError(f"Default template image not found: {DEFAULT_TEMPLATE_PATH}")
+            raise FileNotFoundError(
+                f"Default template image not found: {DEFAULT_TEMPLATE_PATH}"
+            )
         return DEFAULT_TEMPLATE_PATH
     return _save_image_upload(upload, directory, stem)
 
@@ -354,9 +383,7 @@ def _resolve_font_upload(request, directory: Path) -> str | None:
     return font_path or None
 
 
-def _download(
-    content: bytes, filename: str, mimetype: str, *, attachment: bool = True
-):
+def _download(content: bytes, filename: str, mimetype: str, *, attachment: bool = True):
     return send_file(
         io.BytesIO(content),
         mimetype=mimetype,

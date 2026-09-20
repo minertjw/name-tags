@@ -3,7 +3,6 @@ from pathlib import Path
 
 from PIL import ImageFont
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 IMAGES_DIR = BASE_DIR / "images"
 DEFAULT_TEXT_COLOR = "#000000"

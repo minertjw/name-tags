@@ -1,7 +1,6 @@
 import csv
 from typing import TextIO
 
-
 GeneratorRow = dict[str, str]
 MAX_GENERATOR_ROWS = 5000
 MAX_FIELD_LENGTH = 500
@@ -13,7 +12,9 @@ def read_generator_csv_stream(csv_file: TextIO) -> list[GeneratorRow]:
     if reader.fieldnames is None:
         raise ValueError("CSV file does not contain a header row.")
 
-    normalized_fields = [field.lstrip("\ufeff").strip().lower() for field in reader.fieldnames]
+    normalized_fields = [
+        field.lstrip("\ufeff").strip().lower() for field in reader.fieldnames
+    ]
     if len(normalized_fields) != len(set(normalized_fields)):
         raise ValueError("CSV column names must be unique.")
     field_map = dict(zip(normalized_fields, reader.fieldnames))
@@ -44,7 +45,9 @@ def read_generator_csv_stream(csv_file: TextIO) -> list[GeneratorRow]:
                 )
             rows.append(row)
             if len(rows) > MAX_GENERATOR_ROWS:
-                raise ValueError(f"CSV files may contain no more than {MAX_GENERATOR_ROWS} rows.")
+                raise ValueError(
+                    f"CSV files may contain no more than {MAX_GENERATOR_ROWS} rows."
+                )
 
     if not rows:
         raise ValueError("CSV does not contain any non-empty rows.")

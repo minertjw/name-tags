@@ -2,9 +2,13 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-
 SOCIETY_LOGO_DIR = Path(__file__).resolve().parent.parent / "assets" / "societies"
-SOCIETY_LOGO_FILENAMES = ("UONES.png", "NUWIE.png", "AusIMM.png", "NUChES.png", )
+SOCIETY_LOGO_FILENAMES = (
+    "UONES.png",
+    "NUWIE.png",
+    "AusIMM.png",
+    "NUChES.png",
+)
 FOOTER_HEIGHT_RATIO = 0.25
 FOOTER_SIDE_MARGIN_RATIO = 0.025
 FOOTER_GAP_RATIO = 0.015

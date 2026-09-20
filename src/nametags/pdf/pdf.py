@@ -1,12 +1,10 @@
 import os
-from collections.abc import Callable
 from pathlib import Path
 
 from PIL import Image
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
-
 
 IMAGES_PER_PAGE = 8
 IMAGE_WIDTH_CM = 9.2
@@ -33,7 +31,7 @@ def draw_image(c: canvas.Canvas, img_path: Path, x: float, y: float) -> None:
     try:
         with Image.open(img_path) as img:
             aspect = img.height / img.width
-            
+
         img_height_px = image_width_px * aspect
         c.drawImage(
             str(img_path),
@@ -61,7 +59,7 @@ def _page_position(index: int) -> tuple[float, float]:
 
 
 def generate_pdf(image_dir: str, output_dir: str) -> None:
-    images = collect_images(image_dir) # TODO: This shouldn't need to collect images
+    images = collect_images(image_dir)  # TODO: This shouldn't need to collect images
     if not images:
         return
 
@@ -77,6 +75,6 @@ def generate_pdf(image_dir: str, output_dir: str) -> None:
         img_path = Path(image_dir) / img_name
         try:
             draw_image(c, img_path, x, y)
-        except RuntimeError as exc:
+        except RuntimeError:
             pass
     c.save()

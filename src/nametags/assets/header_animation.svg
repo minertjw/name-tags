@@ -399,7 +399,7 @@
          inkscape:export-filename="FullCog.svg"
          inkscape:export-xdpi="300"
          inkscape:export-ydpi="300">
-         
+
          <animateTransform
            attributeName="transform"
            type="rotate"
@@ -428,7 +428,7 @@
               0.2 1 0.8 1;
             "
            />
-          
+
           </path></clipPath></defs><!-- Hidden vector tracing draft. --><g
      inkscape:groupmode="layer"
      id="layer3"

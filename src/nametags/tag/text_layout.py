@@ -2,12 +2,14 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from nametags.tag.footer_logos import load_trimmed_logo
 from nametags.tag.fonts import load_font
-from nametags.tag.render_config import FontLike, MIN_FONT_SIZE, TextBoxSpec, TextRegion
+from nametags.tag.footer_logos import load_trimmed_logo
+from nametags.tag.render_config import MIN_FONT_SIZE, FontLike, TextBoxSpec, TextRegion
 
 
-def measure_text(draw: ImageDraw.ImageDraw, text: str, font: FontLike) -> tuple[int, int]:
+def measure_text(
+    draw: ImageDraw.ImageDraw, text: str, font: FontLike
+) -> tuple[int, int]:
     left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
     return int(right - left), int(bottom - top)
 
@@ -59,7 +61,9 @@ def split_text_lines(
 
     words = text.split()
     if max_lines < 2 or len(words) < 2:
-        raise ValueError("Text is too wide to fit on the tag at the configured font size.")
+        raise ValueError(
+            "Text is too wide to fit on the tag at the configured font size."
+        )
 
     best_lines: list[str] | None = None
     best_width: int | None = None
@@ -199,8 +203,8 @@ def draw_text_block_with_logo(
     )
     gap = max(1, region.width // 40)
     group_width = logo.width + gap + text_width + abs(shadow_offset[0])
-    group_left = int(round(region.left + (region.width - group_width) / 2))
-    logo_top = int(round(region.top + (region.height - logo.height) / 2))
+    group_left = round(region.left + (region.width - group_width) / 2)
+    logo_top = round(region.top + (region.height - logo.height) / 2)
     image.alpha_composite(logo, (group_left, logo_top))
     text_left = group_left + logo.width + gap
     text_top = region.top + (region.height - text_height) // 2 - top
@@ -248,10 +252,10 @@ def build_text_regions(
         if not text_value:
             continue
 
-        box_left = int(round(image_width * left_ratio))
-        box_top = int(round(image_height * top_ratio))
-        box_width = max(1, int(round(image_width * width_ratio)))
-        box_height = max(1, int(round(image_height * height_ratio)))
+        box_left = round(image_width * left_ratio)
+        box_top = round(image_height * top_ratio)
+        box_width = max(1, (round(image_width * width_ratio)))
+        box_height = max(1, (round(image_height * height_ratio)))
         text_width = max(1, box_width - abs(shadow_offset[0]))
         if name == "top" and top_logo_path is not None:
             logo = load_trimmed_logo(top_logo_path)

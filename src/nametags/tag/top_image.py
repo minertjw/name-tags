@@ -1,5 +1,5 @@
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 
 from PIL import Image
 
@@ -32,7 +32,10 @@ def resolve_image_filename(
     if not IMAGES_DIR.is_dir():
         return None
     for image_path in IMAGES_DIR.iterdir():
-        if image_path.is_file() and image_path.name.casefold() == candidate_name.casefold():
+        if (
+            image_path.is_file()
+            and image_path.name.casefold() == candidate_name.casefold()
+        ):
             return image_path
     return None
 
@@ -45,10 +48,10 @@ def draw_top_image(
 ) -> None:
     _, left_ratio, top_ratio, width_ratio, _height_ratio = top_text_box
     _, _, middle_top_ratio, _, _ = middle_text_box
-    box_left = int(round(image.width * left_ratio))
-    box_top = int(round(image.height * top_ratio))
-    middle_top = int(round(image.height * middle_top_ratio))
-    max_width = max(1, int(round(image.width * width_ratio)))
+    box_left = round(image.width * left_ratio)
+    box_top = round(image.height * top_ratio)
+    middle_top = round(image.height * middle_top_ratio)
+    max_width = max(1, (round(image.width * width_ratio)))
     max_height = middle_top - box_top - 2
     if max_height < 1:
         raise ValueError(
@@ -68,5 +71,5 @@ def draw_top_image(
             Image.Resampling.LANCZOS,
         )
 
-    left = box_left + int(round((max_width - overlay.width) / 2))
+    left = box_left + (round((max_width - overlay.width) / 2))
     image.alpha_composite(overlay, (left, box_top))

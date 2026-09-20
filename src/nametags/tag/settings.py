@@ -1,14 +1,16 @@
-from dataclasses import dataclass
 import json
 import re
-from typing import Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass
 
 from nametags.tag.realms import REALM_COLORS
-from nametags.tag.render_config import DEFAULT_MIDDLE_MAX_FONT_SIZE, TEXT_BOX_SPECS, TextBoxSpec
+from nametags.tag.render_config import (
+    DEFAULT_MIDDLE_MAX_FONT_SIZE,
+    TEXT_BOX_SPECS,
+    TextBoxSpec,
+)
 
 MIN_BOX_SIZE = 0.03
-
-
 
 
 @dataclass(frozen=True)
@@ -37,7 +39,9 @@ def parse_render_settings(values: Mapping[str, str]) -> RenderSettings:
         try:
             value = int(raw_value)
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"{name.replace('_', ' ').title()} must be a whole number.") from exc
+            raise ValueError(
+                f"{name.replace('_', ' ').title()} must be a whole number."
+            ) from exc
         if not minimum <= value <= maximum:
             raise ValueError(
                 f"{name.replace('_', ' ').title()} must be between {minimum} and {maximum}."
@@ -49,7 +53,9 @@ def parse_render_settings(values: Mapping[str, str]) -> RenderSettings:
         try:
             value = float(raw_value)
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"{name.replace('_', ' ').title()} must be a number.") from exc
+            raise ValueError(
+                f"{name.replace('_', ' ').title()} must be a number."
+            ) from exc
         if not minimum <= value <= maximum:
             raise ValueError(
                 f"{name.replace('_', ' ').title()} must be between {minimum:g} and {maximum:g}."
