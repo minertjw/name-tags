@@ -55,7 +55,7 @@ def get_font_options() -> list[tuple[str, str]]:
 def load_font(font_path: str | Path | None, size: int) -> FontLike:
     if font_path is not None:
         normalized_font_path = str(font_path).strip()
-        if normalized_font_path:
+        if _is_font_loadable(normalized_font_path):
             return ImageFont.truetype(normalized_font_path, size=size)
 
     return ImageFont.load_default()
