@@ -11,6 +11,7 @@ from PIL import Image, ImageFont, UnidentifiedImageError
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
+from nametags.paths import BASE_DIR
 from nametags.pdf.generator_csv import read_generator_csv_stream
 from nametags.pdf.pdf import generate_pdf
 from nametags.tag.fonts import get_font_options
@@ -24,8 +25,6 @@ from nametags.tag.render_config import (
 from nametags.tag.settings import get_default_preview_settings, parse_render_settings
 from nametags.tag.text import create_tag
 from nametags.tag.top_image import image_filename_from_text
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 DEFAULT_TEMPLATE_PATH = BASE_DIR / "assets" / "blank-template.png"
 TEMPLATES_PATH = BASE_DIR / "web" / "templates"

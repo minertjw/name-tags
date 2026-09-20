@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import ImageFont
 
-from nametags.__main__ import BASE_DIR
+from nametags.paths import BASE_DIR
 
 BUNDLED_FONT_DIR = BASE_DIR / "assets" / "fonts"
 

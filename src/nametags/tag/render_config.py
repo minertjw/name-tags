@@ -1,13 +1,7 @@
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 
+from nametags.paths import BASE_DIR
 from nametags.tag.fonts import FontLike
-
-if getattr(sys, "frozen", False):
-    BASE_DIR = Path(__file__).resolve().parent.parent
-else:
-    BASE_DIR = Path(__file__).resolve().parent
 
 IMAGES_DIR = BASE_DIR / "images"
 DEFAULT_TEXT_COLOR = "#000000"

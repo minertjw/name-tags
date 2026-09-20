@@ -1,6 +1,6 @@
 from PIL import ImageFont
 
-from nametags.__main__ import BASE_DIR
+from nametags.paths import BASE_DIR
 from nametags.tag.fonts import get_font_options, load_font
 
 
