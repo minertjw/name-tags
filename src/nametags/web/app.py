@@ -26,7 +26,10 @@ from nametags.tag.text import create_tag
 from nametags.tag.top_image import image_filename_from_text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 DEFAULT_TEMPLATE_PATH = BASE_DIR / "assets" / "blank-template.png"
+TEMPLATES_PATH = BASE_DIR / "web" / "templates"
+STATIC_PATH = BASE_DIR / "web" / "static"
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
@@ -56,7 +59,7 @@ PREVIEW_CASES: dict[str, PreviewRow] = {
 
 
 def create_app(test_config: dict[str, object] | None = None) -> Flask:
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=STATIC_PATH, template_folder=TEMPLATES_PATH)
     app.config.from_mapping(MAX_CONTENT_LENGTH=MAX_UPLOAD_BYTES)
     if test_config:
         app.config.update(test_config)

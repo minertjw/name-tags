@@ -2,15 +2,32 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['src/nametags/__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ('src/nametags/assets', 'nametags/assets'),
+        ('src/nametags/web/static', 'nametags/web/static'),
+        ('src/nametags/web/templates', 'nametags/web/templates')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        "altgraph",
+        "colorama",
+        "iniconfig",
+        "packaging",
+        "pefile",
+        "pluggy",
+        "pygments",
+        "pyinstaller",
+        "pyinstaller-hooks-contrib",
+        "pytest",
+        "pywin32-ctypes",
+        "setuptools",
+    ],
     noarchive=False,
     optimize=0,
 )
@@ -22,7 +39,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='main',
+    name='nametags-onefile',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
